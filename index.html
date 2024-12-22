@@ -1,65 +1,1666 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAKAR QIBLAT</title>
+  <link rel="canonical" href="https://supremindset.github.io/PAKAR-PRO/" />
+  <link rel="manifest" href="/PAKAR-PRO/manifest.json">
+  <script>
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.register(
+        '/PAKAR-PRO/sw.js',
+        {scope: '/PAKAR-PRO/'}
+      )
+    }
+  </script>
+  <style>
+    body {
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+    }
 
-  <head>
-    <script src='//cdn.jsdelivr.net/npm/tabletop@1.5.2/src/tabletop.min.js'></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    h2 {
+      color: #34495e;
+      margin-bottom: 20px;
+    }
 
-    <script src="//unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    .container {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto; /* Ensure the container can scroll */
+      width: 100%;
+      position: relative;
+      padding-top: 30px;
+    }
 
-    <style>
-    html, body{  
-    height: 100%;
-    width: 100%;
+    .circle-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin-bottom: 50px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1;
 }
 
-
- #map-div {
-   height: 100%;
-   width: 100%;
+.circle {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	border: 1px solid #2980b9;
+	transition: transform 0.5s ease;
+	background-color: #ffffff;
+	z-index: 1;
 }
-      </style>    
-      
-  </head>
+    
+    .sticky-wrapper {
+      position: relative;
+      top: 0;
+      z-index: 2;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      background-color: #f7f9fc;
+    }
 
-  <body>
-      <div id="map-div"></div>
-      
+    .non-sticky {
+      position: static; /* Changes from sticky to static */
+    }
+
+    .data-inputs {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px; /* Add some margin to prevent overlap with other elements */
+    }
+    
+    .degree-number {
+      position: absolute;
+      transform-origin: center;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      color: #2980b9;
+    }
+
+    .center-dot {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background-color: #2980b9;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      border: 2px solid #ffffff;
+      transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      z-index: 8; /* Higher z-index to place it on top of lines */
+    }
+
+    .center-dot:hover {
+      background-color: #3498db;
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3), 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .center-dot:active {
+      background-color: #1e6a8d;
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    .center-line {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      background-color: #333;
+      top: 50%;
+      left: 0;
+      transform-origin: center;
+      transform: translateY(-50%);
+      transition: transform 0.5s ease;
+      z-index: 2; /* Ensure lines are behind the center-dot */
+    }
+
+    .arrow-line {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      background-color: red;
+      top: 50%;
+      left: 0;
+      transform-origin: center;
+      transform: translateY(-50%) rotate(0deg);
+      transition: transform 0.5s ease;
+      z-index: 2; /* Ensure lines are behind the center-dot */
+    }
+
+    .short-horizontal-line {
+      position: absolute;
+      width: 250px;
+      height: 2px;
+      background-color: #2980b9;
+      opacity: 0.2;
+      top: 50%;
+      left: 50%;
+      transform-origin: center;
+      transform: translate(-50%, -50%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .vertical-line {
+      position: absolute;
+      width: 2px;
+      height: 250px;
+      background-color: #2980b9;
+      opacity: 0.2;
+      top: 50%;
+      left: 50%;
+      transform-origin: center;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .label-west, .label-east {
+      color: #2980b9;
+      font-size: 14px;
+      font-weight: bold;
+      margin: -20px 0;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .label-north, .label-south {
+      color: #2980b9;
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0 5px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .label-north {
+      margin-left: -20px;
+    }
+
+    .label-south {
+      margin-right: -20px;
+    }
+
+    .label-east {
+      margin-bottom: -20px;
+    }
+
+    .label-west {
+      margin-top: -20px;
+    }
+
+    .arrow-head {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      top: 50%;
+      left: 100%;
+      transform: translate(-100%, -50%);
+      transition: transform 0.5s ease;
+      z-index: 2; /* Ensure heads are behind the center-dot */
+    }
+
+    .black-arrow-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background-color: #333;
+      top: 50%;
+      left: 0;
+      transform-origin: center;
+      transform: translateY(-50%);
+      transition: transform 0.5s ease;
+      z-index: 2; /* Ensure lines are behind the center-dot */
+    }
+
+    .black-arrow-head {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #333;
+      border-radius: 50%;
+      top: 50%;
+      left: 100%;
+      transform: translate(-100%, -50%);
+      transition: transform 0.5s ease;
+      z-index: 2; /* Ensure heads are behind the center-dot */
+    }
+
+    .custom-select {
+      box-sizing: border-box;
+      width: 300px;
+      height: 41px;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;
+      margin: 5px 0; /* Slightly larger margin for better spacing */
+      border: 2px solid #2980b9;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.3s;
+      background-color: #ffffff;
+      cursor: pointer;
+    }
+
+    select {
+      background-color: #ffffff;
+      cursor: pointer;
+    }
+
+    input[type="number"]::placeholder {
+      color: #7f8c8d;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    input[type="number"]:focus, select:focus {
+      border-color: #3498db;
+    }
+
+    select::-ms-expand {
+      display: none;
+    }
+    
+    .all-fieldset {
+      border: 2px solid #2980b9;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 20px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .data-inputs-fieldset {
+      border: 2px solid #2980b9;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .location-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .location-btn:hover {
+      background-color: #3498db;
+    }
+
+    .map-fieldset {
+      border: 2px solid #2980b9;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 20px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .map-fieldset legend {
+      font-size: 1.2em;
+      color: #2980b9;
+      font-weight: bold;
+      padding: 0 10px;
+    }
+
+    #map.circle-map {
+      border-radius: 50%; /* Ensure circular shape */
+      overflow: hidden; /* Hide overflow */
+      transition: all 0.3s ease; /* Smooth transition for resizing */
+    }
+
+    #map {
+  position: relative;
+  height: 50vh; /* Adjust the height as needed */
+  width: 100vw; /* Full width of the viewport */
+  margin-top: 0;
+  border: none;
+  transition: all 0.3s ease;
+  z-index: 8;
+}
+
+    input[type="range"] {
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    .leaflet-control {
+      top: 100px;
+    }
+    
+    .red-text {
+  color: #1e6a8d;
+}
+
+.yellow-text {
+  color: #1e6a8d;
+}
+
+.firstPin-shadow {
+  filter: drop-shadow(0 0 100000px rgba(0, 255, 0, 0.5));
+}
+
+.install-banner {
+  background-color: #2980b9;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
+.degree-button-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.degree-button {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    margin: 0 10px;
+    background-color: #2980b9;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.degree-button:hover {
+    background-color: #3498db;
+}
+
+.degree-button:active {
+    background-color: #1e6a8d;
+}
+
+.svg {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 100%;
+  height: 100%;
+  z-index: 7;
+}
+
+.svg text {
+    font-size: 10px; /* Adjust the size as needed */
+    fill: #333;
+}
+
+.arah-qiblat {
+      position: absolute;
+      top: 60%; /* Move it further down below the red line */
+      left: 95%; /* Center it horizontally relative to the line */
+      transform: translate(-50%, 0); /* Adjust vertical positioning */
+      font-size: 16px;
+      color: #333;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .round-button {
+  position: absolute;
+  top: -50px; /* Adjust this value to position it above the firstPin */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  background-color: #2980b9;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+  z-index: 1001; /* Ensure it's above other elements */
+}
+
+.round-button:hover {
+  background-color: #3498db;
+}
+
+.round-button:active {
+  background-color: #1e6a8d;
+}
+
+#searchResults li {
+  background-color: #f7f9fc;
+  border: 1px solid #2980b9;
+  padding: 10px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#searchResults li:hover {
+  background-color: #dfe6e9;
+}
+
+.modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1000; /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; /* 15% from the top and centered */
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; /* Could be more or less, depending on screen size */
+      border-radius: 10px;
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-image {
+      width: 100%;
+      height: auto;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+
+    .modal-text {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .modal-text ul {
+      list-style-type: disc;
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    /* Style the marquee container as a button */
+    .marquee-button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="install-banner-container">
+  <div class="marquee-button">
+    <marquee behavior="scroll" direction="left" scrollamount="5" class="install-banner" id="marqueeText">
+      KEM FALAK (Sempena Hujan Meteor Quadrantids) | 4-5 Januari 2025 (Sabtu-Ahad) | Baitul Hilal Bukit Jugra Kuala Langat Banting
+    </marquee>
+  </div>
+</div>
+
+<!-- The Modal -->
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <img id="modalImage" src="" alt="Event Image" class="modal-image">
+    <div id="modalText" class="modal-text">
+      <ul id="modalList"></ul>
+    </div>
+  </div>
+</div>
+<fieldset class="data-inputs-fieldset">
+    <legend>Qiblat Settings</legend>
+    <div class="data-inputs">
+      <select class="custom-select" id="kaedahQiblat">
+        <option value="bayang" selected>Bayang-Bayang</option>
+        <option value="bangunan">Bearing Bangunan</option>
+      </select>
+      <input class="custom-select" type="number" id="degreeInput" placeholder="Sun Azimuth / Bearing Bangunan" min="0" max="360" step="0.1">
+      <input class="custom-select" type="number" id="qiblatInput" placeholder="Qiblat" min="0" max="360" step="0.1">
+      <input class="custom-select" type="datetime-local" id="dateTimeInput" placeholder="Select Date and Time">
+      <button id="toggleMapCircle" class="location-btn">Fit Map to Circle</button>
+    </div>
+  </fieldset>
+  <br>
+  <div class="container">
+    <div class="sticky-wrapper">
+      <div class="circle-container">
+        <svg class="svg" width="200" height="200" viewBox="0 0 200 200">
+    <path id="sector1" fill="rgba(41, 128, 185, 0.2)"></path> <!-- #2980b9 with transparency -->
+    <path id="sector2" fill="rgba(214, 234, 248, 0.5)"></path> <!-- Light blue with transparency -->
+    <path id="sector3" fill="rgba(41, 128, 185, 0.2)"></path> <!-- #2980b9 with transparency -->
+    <path id="sector4" fill="rgba(214, 234, 248, 0.5)"></path> <!-- Light blue with transparency -->
+    <text id="label1" x="0" y="0" text-anchor="middle"></text>
+    <text id="label2" x="0" y="0" text-anchor="middle"></text>
+    <text id="label3" x="0" y="0" text-anchor="middle"></text>
+    <text id="label4" x="0" y="0" text-anchor="middle"></text>
+</svg>
+<button class="center-dot" id="centerDotButton"></button>
+        <div class="circle" id="circle">
+          <div class="center-line" id="centerLine"></div>
+          <div class="arrow-line" id="arrowLine">
+            <div class="arrow-head" id="arrowHead"></div>
+            <div class="arah-qiblat">
+  <span class="qiblat-arrow">🕋</span>
+</div>
+          </div>
+          <div class="black-arrow-line" id="blackArrowLine">
+            <div class="black-arrow-head" id="blackArrowHead"></div>
+          </div>
+          <div class="short-horizontal-line" id="shortHorizontalLine">
+            <div class="label-north">S</div>
+            <div class="label-south">N</div>
+          </div>
+          <div class="vertical-line" id="verticalLine">
+            <div class="label-east">W</div>
+            <div class="label-west">E</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="degree-button-container">
+    <button class="degree-button" id="decreaseButton">–</button>
+    <span id="rotationValue">0°</span>
+    <button class="degree-button" id="increaseButton">+</button>
+</div>
+
+      <div id="install-banner-container"></div>
+    
+    <fieldset class="map-fieldset">
+      <legend><button id="updateLocationButton" class="location-btn">Update Location</button></legend>
+      <div class="location-search-container">
+  <input type="text" id="locationSearch" placeholder="Search location..." class="custom-select" /></br>
+  <button id="searchButton" class="location-btn">Search</button>
+  <button id="clearSearchButton" class="location-btn">Clear</button>
+</div>
+<ul id="searchResults" style="list-style-type: none; padding: 0; margin: 10px 0; display: none;"></ul></br>
+<div id="markerTooltipContainer" style="padding: 10px; background-color: #f7f9fc; border-top: 1px solid #2980b9;">
+  <p>
+    <span class="red-text" id="markerTooltipText1"></span>
+    <span class="yellow-text" id="markerTooltipText2"></span>
+  </p>
+  <p id="firstPinData">
+    <!-- This will hold the extra data for the firstPin -->
+  </p>
+</div>
+      <div id="map" style="position: relative; height: 90vh; width: 100%; margin-top: 0; border: none;"></div>
+    </fieldset>
+    
+  </div>
 <script>
-var map = L.map('map-div').setView([55.676098, 12.568337], 5);
-var basemap = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-  attribution: 'Basemap (c) <a href="http://openstreetmap.org">OpenStreetMap</a>',
-  //minZoom: 5,
-  maxZoom: 100
-});
-basemap.addTo(map);
+const modalData = [
+  {
+    image: "image1-url.jpg",
+    text: [
+      "Date: 4-5 Januari 2025",
+      "Location: Baitul Hilal Bukit Jugra Kuala Langat Banting",
+      "Event: KEM FALAK (Sempena Hujan Meteor Quadrantids)"
+    ],
+    important: 3 // Show this modal 3 times consecutively
+  },
+  {
+    image: "https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/IMG_20240215_102404.jpg",
+    text: [
+      "Date: 6-7 Februari 2025",
+      "Location: Place Two",
+      "Event: Another Event"
+    ],
+    important: "latest" // Show this modal every 2 clicks
+  },
+  {
+    image: "image1-url.jpg",
+    text: [
+      "Date",
+      "Location",
+      "Event"
+    ],
+    important: 3 // Show this modal 3 times consecutively
+  },
+  // Add more modal objects here
+];
 
+// Function to create and display the modal
+const showModal = (degree) => {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.display = 'block';
 
-var fg = L.featureGroup().addTo(map);
-function addPoints(data, tabletop) {
-    var line = L.polyline([]).addTo(map);
-    for (var row in data) {
-    var marker = L.marker([
-      data[row].Latitude,
-      data[row].Longitude
-    ]).addTo(fg);
-    line.addLatLng(marker.getLatLng());
-    marker.bindPopup('<strong>' + data[row].Info + '</strong>');
+  let content = '';
+
+  // Customize the content based on the degree
+  if (degree === 100) {
+    content = `<p>You are lucky!</p>`;
+  } else if (degree === 200) {
+    content = `<p>You are the best!</p>`;
+  } else if (degree === 270) {
+    content = `
+      <p>Here's a picture for you:</p>
+      <img src="https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/IMG_20240215_102404.jpg" alt="Sample Image" class="modal-image">
+    `;
   }
-  
-  map.fitBounds(fg.getBounds());
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      ${content}
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close the modal when the close button is clicked
+  modal.querySelector('.close').onclick = () => {
+    modal.style.display = 'none';
+    document.body.removeChild(modal);
+  };
+
+  // Close the modal when clicking outside of the modal
+  window.onclick = (event) => {
+    if (event.target === modal) {
+      modal.style.display = 'none';
+      document.body.removeChild(modal);
+    }
+  };
+};
+
+let currentModalIndex = null;
+let repeatCount = 0;
+let clickCount = 0;
+
+// Function to update modal content
+const updateModalContent = () => {
+  const modalImage = document.getElementById("modalImage");
+  const modalList = document.getElementById("modalList");
+
+  clickCount++;
+
+  // Check for modals with 'latest' importance
+  const latestModal = modalData.find(({ important }) => important === "latest");
+
+  if (clickCount % 2 === 0 && latestModal) {
+    currentModalIndex = modalData.indexOf(latestModal);
+    repeatCount = 1; // Show 'latest' modal on every second click
+  } else if (currentModalIndex === null || repeatCount <= 0) {
+    // Select a random index for other modals
+    do {
+      currentModalIndex = Math.floor(Math.random() * modalData.length);
+    } while (modalData[currentModalIndex].important === "latest");
+
+    repeatCount = modalData[currentModalIndex].important || 1;
+  }
+
+  const currentData = modalData[currentModalIndex];
+
+  modalImage.src = currentData.image;
+  modalList.innerHTML = currentData.text.map(item => `<li>${item}</li>`).join('');
+
+  // Decrease the repeat count
+  repeatCount--;
 }
 
+// JavaScript to handle modal display
+const modal = document.getElementById("myModal");
+const span = document.getElementsByClassName("close")[0];
+const marqueeButton = document.querySelector(".marquee-button");
 
-function init() {
-  Tabletop.init({
-    key: 'https://docs.google.com/spreadsheets/d/1Rs6xPlJ8pU4UFfmokjATaf4dArMWxQxZcyS-xRIIFuY/edit?usp=sharing',
-    callback: addPoints,
-    simpleSheet: true
+marqueeButton.onclick = () => {
+  updateModalContent(); // Update content before showing
+  modal.style.display = "block";
+}
+
+span.onclick = () => {
+  modal.style.display = "none";
+}
+
+window.onclick = event => {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+}
+
+const isOnline = () => navigator.onLine;
+
+const loadScript = (url, callback) => {
+  const script = document.createElement('script');
+  script.src = url;
+  script.defer = true;
+  script.onload = callback;
+  document.body.appendChild(script);
+}
+
+// Array of birthdays
+  const birthdays = [
+    { name: "Ustaz Latif", birthdate: "12-21" }, // December 21st
+    { name: "Bob", birthdate: "01-15" },   // January 15th
+    // Add more birthdays here
+  ];
+
+  // Function to check for birthdays and update marquee
+  const checkBirthdays = () => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(today.getDate()).padStart(2, '0');
+    const currentDate = `${month}-${day}`;
+
+    const birthdayPerson = birthdays.find(person => person.birthdate === currentDate);
+
+    const marqueeText = document.getElementById("marqueeText");
+
+    if (birthdayPerson) {
+      marqueeText.innerHTML = `🎉 Happy Birthday, ${birthdayPerson.name}! 🎂`;
+    }
+  };
+
+  // Call the function to check for birthdays
+  checkBirthdays();
+
+let updateBearingAndLines;
+let mapInitialized = false;
+let activityTimeout;
+let inputDebounceTimeout;
+let degree = 0;
+let holdInterval = null;
+let speed = 1000;
+let firstPin, secondPin;
+let map; // Declare map here to make it accessible globally
+let updateButtonPosition; // Declare the function variable here
+
+window.onload = () => {
+  if (isOnline()) {
+    initializeMapIfOnline();
+  } else {
+    document.getElementById('map').style.display = 'none';
+  }
+
+  const circleWrapper = document.querySelector('.sticky-wrapper');
+  toggleStickyOnFocus(ELEMENTS.degreeInput, circleWrapper);
+  toggleStickyOnFocus(ELEMENTS.qiblatInput, circleWrapper);
+
+  setupInputWithDebounce(ELEMENTS.degreeInput);
+  setupInputWithDebounce(ELEMENTS.qiblatInput);
+
+  const toggleMapCircleButton = document.getElementById('toggleMapCircle');
+  toggleMapCircleButton.addEventListener('click', toggleMapCircle);
+
+  initializeDegreeButtons();
+  populateDegreeNumbers();
+  initializeDynamicAngleUpdates();
+
+  // Add event listener for the search button
+  document.getElementById('searchButton').addEventListener('click', () => {
+    const query = document.getElementById('locationSearch').value;
+    if (query) {
+      searchLocation(query);
+    }
+  });
+
+  // change sector color
+  const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
+  kaedahQiblatSelect.addEventListener('change', updateSectorColors);
+
+  updateSectorColors(); // Call once on load to set initial colors
+};
+
+const updateSectorColors = () => {
+  const kaedahQiblatValue = document.getElementById('kaedahQiblat').value;
+  const sectors = {
+    sector1: document.getElementById('sector1'),
+    sector2: document.getElementById('sector2'),
+    sector3: document.getElementById('sector3'),
+    sector4: document.getElementById('sector4')
+  };
+
+  const colors = {
+    bayang: ['rgba(34, 139, 34, 0.8)', 'rgba(34, 139, 34, 0.2)'],
+    bangunan: ['rgba(255, 223, 70, 0.8)', 'rgba(255, 223, 70, 0.2)']
+  };
+
+  if (kaedahQiblatValue in colors) {
+    const [darkerColor, lighterColor] = colors[kaedahQiblatValue];
+    sectors.sector1.setAttribute('fill', darkerColor);
+    sectors.sector3.setAttribute('fill', darkerColor);
+    sectors.sector2.setAttribute('fill', lighterColor);
+    sectors.sector4.setAttribute('fill', lighterColor);
+  }
+}
+
+const initializeMapIfOnline = () => {
+  if (!mapInitialized) {
+    loadLeafletResources(() => {
+      initializeMap();
+      mapInitialized = true;
+    });
+  }
+}
+
+const loadLeafletResources = (callback) => {
+  const leafletCSS = document.createElement('link');
+  leafletCSS.rel = 'stylesheet';
+  leafletCSS.href = 'https://unpkg.com/leaflet/dist/leaflet.css';
+  document.head.appendChild(leafletCSS);
+
+  loadScript('https://unpkg.com/leaflet/dist/leaflet.js', () => {
+    loadScript('https://unpkg.com/suncalc/suncalc.js', callback);
   });
 }
-init()
-</script>     
-  </body>
 
+const checkNetworkStatus = () => {
+  const mapElement = document.getElementById('map');
+  if (navigator.onLine) {
+    mapElement.style.display = 'block';
+    initializeMapIfOnline();
+  } else {
+    mapElement.style.display = 'none';
+  }
+}
+
+window.addEventListener('online', checkNetworkStatus);
+window.addEventListener('offline', checkNetworkStatus);
+
+const initializeMap = () => {
+  const iconSettings = {
+    iconSize: [100, 100],
+    iconAnchor: [30, 100],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28]
+  };
+
+  const redIcon = L.icon({
+    ...iconSettings,
+    iconUrl: 'https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/redPin.svg'
+  });
+
+  const yellowIcon = L.icon({
+    ...iconSettings,
+    iconUrl: 'https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/yellowPin.svg'
+  });
+
+  const defaultLocation = [2.8126, 101.5018];
+  map = L.map('map').setView(defaultLocation, 19);
+
+  const addLayer = (url, attribution, maxZoom) => 
+    L.tileLayer(url, { attribution, maxZoom });
+
+  const baseMaps = {
+    "Esri World Imagery": addLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>', 19),
+    "HERE Satellite": addLayer('https://{s}.aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?apiKey=ZrGsYcNXW4T_cGxQWLiIZ0DdraWLJ2XaCfI8axrRCkw&lg=eng', 'Map data © 2024 HERE', 22),
+    "HERE Normal Day": addLayer('https://{s}.base.maps.ls.hereapi.com/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?apiKey=ZrGsYcNXW4T_cGxQWLiIZ0DdraWLJ2XaCfI8axrRCkw&lg=eng', 'Map data © 2024 HERE', 20),
+    "OpenStreetMap": addLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'Map data © OpenStreetMap contributors', 19)
+  };
+
+  // Add the Esri World Imagery layer initially
+  baseMaps["Esri World Imagery"].addTo(map);
+
+  L.control.layers(baseMaps).addTo(map);
+
+  const kaabahLatLng = [21.4225, 39.8262];
+  firstPin = L.marker(defaultLocation, { icon: redIcon, draggable: true }).addTo(map);
+  secondPin = L.marker([3.1390, 101.6869], { icon: yellowIcon, draggable: true }).addTo(map);
+
+  const shadowLine = L.polyline([[0, 0], [0, 0]], {
+    color: 'green',
+    weight: 10,
+    opacity: 0.5,
+    dashArray: '5, 5',
+    lineCap: 'round',
+    lineJoin: 'round'
+  }).addTo(map);
+
+  const initialPath = interpolateGreatCircle(2.8126, 101.5018, kaabahLatLng[0], kaabahLatLng[1], 100);
+  const lineToKaabah = L.polyline(initialPath, { 
+  color: 'red',
+  weight: 2, // Increase the weight for better visibility
+  interactive: false, // Make it non-interactive to ensure it renders smoothly
+  pane: 'overlayPane' // Ensure it's rendered on top of other layers
+}).addTo(map);
+
+const lineBetweenPins = L.polyline([[2.8126, 101.5018], [3.1390, 101.6869]], { 
+  color: 'yellow',
+  weight: 2, // Increase the weight for better visibility
+  interactive: false, // Make it non-interactive to ensure it renders smoothly
+  pane: 'overlayPane' // Ensure it's rendered on top of other layers
+}).addTo(map);
+
+  // Function to update the button's position based on the pin's position
+const updateButtonPosition = () => {
+  const firstPinLatLng = firstPin.getLatLng();
+  const point = map.latLngToLayerPoint(firstPinLatLng);
+  roundButton.style.left = `${point.x + 20}px`;
+  roundButton.style.top = `${point.y - 60}px`;
+};
+
+// Initialize the button and attach it to the map
+const roundButton = document.createElement('button');
+roundButton.className = 'round-button';
+roundButton.id = 'newRoundButton';
+roundButton.innerText = 'OK';
+document.querySelector('.leaflet-map-pane').appendChild(roundButton);
+
+// Event listener for dragging the firstPin
+firstPin.on('drag', () => {
+  updateButtonPosition(); // Update the button's position continuously during drag
+});
+
+// Ensure the button is positioned correctly when dragging starts and ends
+firstPin.on('dragstart', () => {
+  updateButtonPosition();
+});
+
+firstPin.on('dragend', () => {
+  updateButtonPosition();
+});
+
+// Event listener for the button click to navigate to install-banner-container
+roundButton.addEventListener('click', (event) => {
+  event.stopPropagation(); // Prevent map click events from interfering
+  const bannerContainer = document.getElementById('install-banner-container');
+  if (bannerContainer) {
+    bannerContainer.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+// Initial positioning of the button
+updateButtonPosition();
+
+  const handlePinDrag = (pin, line, callback) => {
+    pin.on('dragstart', () => line.setStyle({ opacity: 0 }));
+    pin.on('dragend', () => {
+      callback();
+      line.setStyle({ opacity: 1 });
+    });
+  };
+
+  handlePinDrag(firstPin, lineToKaabah, () => {
+    updateBearingAndLines('firstPin');
+    updateButtonPosition();
+  });
+
+  handlePinDrag(secondPin, lineBetweenPins, () => updateBearingAndLines('secondPin'));
+
+  map.on('click', e => {
+    secondPin.setLatLng(e.latlng);
+    updateBearingAndLines('secondPin');
+  });
+
+  map.on('contextmenu', e => {
+    firstPin.setLatLng(e.latlng);
+    updateBearingAndLines('firstPin');
+    updateButtonPosition();
+  });
+
+  const updateLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude: userLat, longitude: userLng } = position.coords;
+          const zoomLevel = 19;
+          firstPin.setLatLng([userLat, userLng]);
+          map.setView([userLat, userLng], zoomLevel);
+          updateBearingAndLines('firstPin');
+          updateButtonPosition();
+        },
+        () => {
+          alert('Unable to retrieve your location. Please enable location services.');
+          firstPin.setLatLng(defaultLocation);
+          map.setView(defaultLocation, 19);
+          updateBearingAndLines('firstPin');
+          updateButtonPosition();
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+      firstPin.setLatLng(defaultLocation);
+      map.setView(defaultLocation, 19);
+      updateBearingAndLines('firstPin');
+      updateButtonPosition();
+    }
+  }
+
+  const addClickEventToButton = (buttonId, handler) => {
+    document.getElementById(buttonId).addEventListener('click', handler);
+  };
+
+  addClickEventToButton('updateLocationButton', updateLocation);
+  addClickEventToButton('centerDotButton', updateLocation);
+
+  const markerTooltipText1Element = document.getElementById('markerTooltipText1');
+  const markerTooltipText2Element = document.getElementById('markerTooltipText2');
+
+  const toDMS = (degrees, isLatitude) => {
+    const degreeAbs = Math.abs(degrees);
+    const degree = Math.floor(degreeAbs);
+    const minuteDecimal = (degreeAbs - degree) * 60;
+    const minute = Math.floor(minuteDecimal);
+    const second = ((minuteDecimal - minute) * 60).toFixed(2);
+    const direction = isLatitude ? (degrees >= 0 ? 'N' : 'S') : (degrees >= 0 ? 'E' : 'W');
+    return `${degree}° ${minute}' ${second}" ${direction}`;
+  }
+
+  const updateBearingAndLines = (changedPin) => {
+  if (firstPin && secondPin) {
+    const firstLatLng = firstPin.getLatLng();
+
+    // Control the visibility of secondPin based on kaedahQiblat value
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN) {
+      secondPin.addTo(map); // Add secondPin to the map
+    } else {
+      map.removeLayer(secondPin); // Remove secondPin from the map
+    }
+
+    const pathToKaabah = interpolateGreatCircle(firstLatLng.lat, firstLatLng.lng, kaabahLatLng[0], kaabahLatLng[1], 100);
+    lineToKaabah.setLatLngs(pathToKaabah);
+
+    // Determine whether to show or hide the lineBetweenPins based on kaedahQiblat value
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN) {
+      const secondLatLng = secondPin.getLatLng();
+      lineBetweenPins.setLatLngs([firstLatLng, secondLatLng]);
+      lineBetweenPins.setStyle({ opacity: 1 }); // Make lineBetweenPins visible
+    } else {
+      lineBetweenPins.setLatLngs([[0, 0], [0, 0]]);
+      lineBetweenPins.setStyle({ opacity: 0 }); // Make lineBetweenPins invisible
+    }
+
+    const bearingToKaabah = calculateBearing(firstLatLng.lat, firstLatLng.lng, kaabahLatLng[0], kaabahLatLng[1]);
+    const sunAzimuth = updateSunAzimuth(firstLatLng);
+
+    // Determine whether to show or hide the shadowLine based on kaedahQiblat value
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG) {
+      updateShadowLine(firstLatLng, sunAzimuth);
+    } else {
+      shadowLine.setLatLngs([[0, 0], [0, 0]]);
+      shadowLine.setStyle({ opacity: 0 }); // Make shadowLine invisible
+    }
+
+    const currentDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+
+    const markerTooltipText1Element = document.getElementById('markerTooltipText1');
+    const markerTooltipText2Element = document.getElementById('markerTooltipText2');
+
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG) {
+      markerTooltipText1Element.innerHTML = `Qiblat: ${bearingToKaabah.toFixed(2)}°<br/>Red Pin - Sun Azimuth: ${sunAzimuth.toFixed(2)}°<br/>`;
+      markerTooltipText2Element.innerHTML = ''; // Clear the second tooltip
+    } else if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN) {
+      const secondLatLng = secondPin.getLatLng();
+      const bearingToSecondPin = calculateBearing(firstLatLng.lat, firstLatLng.lng, secondLatLng.lat, secondLatLng.lng);
+      markerTooltipText2Element.innerHTML = `Qiblat: ${bearingToKaabah.toFixed(2)}°<br/>Yellow Pin - Bearing bangunan: ${bearingToSecondPin.toFixed(2)}°`;
+      markerTooltipText1Element.innerHTML = ''; // Clear the first tooltip
+    }
+
+    const firstPinDataElement = document.getElementById('firstPinData');
+    firstPinDataElement.innerHTML = `Date: ${currentDate.toLocaleDateString()}<br/>Time: ${currentDate.toLocaleTimeString()}<br/>Latitude: ${firstLatLng.lat.toFixed(6)} (${toDMS(firstLatLng.lat)})<br/>Longitude: ${firstLatLng.lng.toFixed(6)} (${toDMS(firstLatLng.lng)})<br/>`;
+
+    if (!ELEMENTS.dateTimeInput.value) {
+      ELEMENTS.qiblatInput.value = bearingToKaabah.toFixed(2);
+    }
+
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN) {
+      ELEMENTS.degreeInput.value = calculateBearing(firstLatLng.lat, firstLatLng.lng, secondPin.getLatLng().lat, secondPin.getLatLng().lng).toFixed(2);
+    } else if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG) {
+      ELEMENTS.degreeInput.value = sunAzimuth.toFixed(2);
+    }
+
+    updateArrow(ELEMENTS.blackArrowLine, sunAzimuth);
+    updateArrow(ELEMENTS.blackArrowHead, sunAzimuth);
+
+    updateCompassDisplay();
+    updateAngles();
+  }
+};
+
+// Update the map click event to only modify secondPin if it's visible
+map.on('click', e => {
+  if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN) {
+    secondPin.setLatLng(e.latlng);
+    updateBearingAndLines('secondPin');
+  }
+});
+
+  const updateSunAzimuth = (position) => {
+    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+    const sunPosition = SunCalc.getPosition(selectedDate, position.lat, position.lng);
+    return sunPosition.azimuth * 180 / Math.PI + 180;
+  }
+
+  const updateShadowLine = (latLng, objectHeight) => {
+  const isNight = isSunDown(new Date(ELEMENTS.dateTimeInput.value || Date.now()), latLng.lat, latLng.lng);
+
+  if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG) {
+    const shadowEndpoint = calculateShadowEndpoint(latLng, objectHeight);
+    shadowLine.setLatLngs([[latLng.lat, latLng.lng], [shadowEndpoint.lat, shadowEndpoint.lng]]);
+    shadowLine.setStyle({ color: 'green', weight: 3, opacity: isNight ? 0.3 : 1, dashArray: '1, 1', lineCap: 'round', lineJoin: 'round' });
+  } else {
+    shadowLine.setLatLngs([[0, 0], [0, 0]]);
+    shadowLine.setStyle({ opacity: 0 });
+  }
+};
+
+  const calculateShadowEndpoint = (startLatLng, objectHeight) => {
+    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+    const position = SunCalc.getPosition(selectedDate, startLatLng.lat, startLatLng.lng);
+
+    const azimuth = position.azimuth;
+    const altitude = position.altitude;
+
+    const shadowLength = objectHeight / Math.tan(altitude);
+
+    const earthRadius = 6371000;
+
+    const angularDistance = shadowLength / earthRadius;
+    const bearing = azimuth;
+
+    const lat1 = toRadians(startLatLng.lat);
+    const lon1 = toRadians(startLatLng.lng);
+
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing));
+    const lon2 = lon1 + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1), Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2));
+
+    return L.latLng(toDegrees(lat2), toDegrees(lon2));
+  }
+
+  ELEMENTS.dateTimeInput.addEventListener('change', () => {
+    if (typeof updateBearingAndLines === 'function') {
+      updateBearingAndLines('firstPin');
+      updateShadowLine(firstPin.getLatLng(), parseFloat(ELEMENTS.degreeInput.value) || 0);
+    }
+  });
+
+  ELEMENTS.kaedahQiblat.addEventListener('change', () => {
+    toggleDateTimeInputVisibility();
+    updateBearingAndLines('firstPin');
+    ELEMENTS.degreeInput.placeholder = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ? "Bearing" : "Azimuth Matahari";
+    ELEMENTS.qiblatInput.placeholder = "True North Qiblat";
+    updateCompassDisplay();
+  });
+}
+
+document.getElementById('searchButton').addEventListener('click', () => {
+  const query = document.getElementById('locationSearch').value;
+  if (query) {
+    searchLocation(query);
+  }
+});
+
+document.getElementById('clearSearchButton').addEventListener('click', () => {
+  const searchResults = document.getElementById('searchResults');
+  searchResults.innerHTML = ''; // Clear the list
+  searchResults.style.display = 'none'; // Hide the list
+  document.getElementById('locationSearch').value = ''; // Clear the search input
+});
+
+const searchLocation = (query) => {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const searchResults = document.getElementById('searchResults');
+      searchResults.innerHTML = ''; // Clear previous results
+
+      if (data && data.length > 0) {
+        data.forEach(location => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${location.display_name} (${location.lat}, ${location.lon})`;
+
+          listItem.addEventListener('click', () => {
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
+            if (firstPin) {
+              firstPin.setLatLng([lat, lon]);
+              map.setView([lat, lon], 19); // Adjust the zoom level as needed
+              updateBearingAndLines('firstPin');
+              if (typeof updateButtonPosition === 'function') {
+                updateButtonPosition(); // Ensure button position is updated
+              }
+            }
+            searchResults.innerHTML = ''; // Clear the list
+            searchResults.style.display = 'none'; // Hide the list
+          });
+
+          searchResults.appendChild(listItem);
+        });
+        searchResults.style.display = 'block'; // Show results when available
+      } else {
+        alert('Location not found. Please try a different search.');
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching location:', error);
+      alert('An error occurred while searching for the location.');
+    });
+}
+
+const calculateAndLabelAngles = (angleA, angleB) => {
+  angleA = (angleA + 360) % 360;
+  angleB = (angleB + 360) % 360;
+
+  const oppositeAngleB = (angleB + 180) % 360;
+  const sector1 = (angleB - angleA + 360) % 360 <= 180 ? (angleB - angleA + 360) % 360 : (oppositeAngleB - angleA + 360) % 360;
+  const sector2 = 180 - sector1;
+  const sector3 = sector1;
+  const sector4 = sector2;
+
+  const radius = 60;
+  drawSectorArc(100, 100, radius, 0, sector1, document.getElementById('sector1'), document.getElementById('label1'), sector1.toFixed(2));
+  drawSectorArc(100, 100, radius, sector1, sector1 + sector2, document.getElementById('sector2'), document.getElementById('label2'), sector2.toFixed(2));
+  drawSectorArc(100, 100, radius, sector1 + sector2, sector1 + sector2 + sector3, document.getElementById('sector3'), document.getElementById('label3'), sector3.toFixed(2));
+  drawSectorArc(100, 100, radius, sector1 + sector2 + sector3, 360, document.getElementById('sector4'), document.getElementById('label4'), sector4.toFixed(2));
+}
+
+const drawSectorArc = (cx, cy, radius, startAngle, endAngle, pathElement, labelElement, label) => {
+  const start = polarToCartesian(cx, cy, radius, endAngle);
+  const end = polarToCartesian(cx, cy, radius, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+
+  const d = [
+    "M", cx, cy,
+    "L", start.x, start.y,
+    "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+    "Z"
+  ].join(" ");
+
+  pathElement.setAttribute("d", d);
+
+  const midAngle = startAngle + (endAngle - startAngle) / 2;
+  const labelPos = polarToCartesian(cx, cy, radius / 1.5, midAngle);
+  labelElement.setAttribute("x", labelPos.x);
+  labelElement.setAttribute("y", labelPos.y);
+  labelElement.textContent = `${label}°`;
+}
+
+const polarToCartesian = (cx, cy, radius, angleInDegrees) => {
+  const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+  return {
+    x: cx + (radius * Math.cos(angleInRadians)),
+    y: cy + (radius * Math.sin(angleInRadians))
+  };
+}
+
+const updateAngles = () => {
+  const angleA = parseFloat(ELEMENTS.degreeInput.value) || 0;
+  const angleB = parseFloat(ELEMENTS.qiblatInput.value) || 0;
+
+  calculateAndLabelAngles(angleA, angleB);
+}
+
+const initializeDynamicAngleUpdates = () => {
+  ELEMENTS.degreeInput.addEventListener('input', updateAngles);
+  ELEMENTS.qiblatInput.addEventListener('input', updateAngles);
+
+  if (firstPin && secondPin) {
+    firstPin.on('drag', () => updateBearingAndLines('firstPin'));
+    secondPin.on('drag', () => updateBearingAndLines('secondPin'));
+  }
+}
+
+const setupInputWithDebounce = (inputElement) => {
+  inputElement.addEventListener('input', () => {
+    clearTimeout(inputDebounceTimeout);
+    inputDebounceTimeout = setTimeout(() => {
+      finalizeInput(inputElement);
+    }, 1000); // 1 second delay
+  });
+
+  inputElement.addEventListener('focus', () => {
+    clearTimeout(inputDebounceTimeout); // Clear timeout on focus
+  });
+
+  inputElement.addEventListener('blur', () => {
+    finalizeInput(inputElement); // Finalize immediately on blur
+  });
+}
+
+const finalizeInput = (inputElement) => {
+  inputElement.blur();  // Remove focus to stop editing
+  updateCompassDisplay(); // Ensure the display is updated with the final value
+}
+
+const ELEMENTS = {
+  circle: document.getElementById('circle'),
+  centerLine: document.getElementById('centerLine'),
+  arrowLine: document.getElementById('arrowLine'),
+  arrowHead: document.getElementById('arrowHead'),
+  blackArrowLine: document.getElementById('blackArrowLine'),
+  blackArrowHead: document.getElementById('blackArrowHead'),
+  kaedahQiblat: document.getElementById('kaedahQiblat'),
+  degreeInput: document.getElementById('degreeInput'),
+  degreeTooltip: document.getElementById('degreeTooltip'),
+  qiblatInput: document.getElementById('qiblatInput'),
+  qiblatTooltip: document.getElementById('qiblatTooltip'),
+  distanceToKaabah: document.getElementById('distanceToKaabah'),
+  dateTimeInput: document.getElementById('dateTimeInput'),
+  status: document.getElementById('status')
+};
+
+const DISPLAY = {
+  BLOCK: 'block',
+  NONE: 'none'
+};
+
+const QIBLAT_METHODS = {
+  BANGUNAN: 'bangunan',
+  BAYANG: 'bayang'
+};
+
+const toRadians = (degrees) => degrees * Math.PI / 180;
+const toDegrees = (radians) => radians * 180 / Math.PI;
+
+const calculateBearing = (lat1, lon1, lat2, lon2) => {
+  const lat1Rad = toRadians(lat1);
+  const lat2Rad = toRadians(lat2);
+  const deltaLonRad = toRadians(lon2 - lon1);
+
+  const y = Math.sin(deltaLonRad) * Math.cos(lat2Rad);
+  const x = Math.cos(lat1Rad) * Math.sin(lat2Rad) - Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(deltaLonRad);
+
+  const bearing = Math.atan2(y, x);
+  return (toDegrees(bearing) + 360) % 360;
+}
+
+const interpolateGreatCircle = (lat1, lon1, lat2, lon2, steps) => {
+  const points = [];
+  const startLat = toRadians(lat1);
+  const startLon = toRadians(lon1);
+  const endLat = toRadians(lat2);
+  const endLon = toRadians(lon2);
+
+  const d = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin((endLat - startLat) / 2), 2) +
+    Math.cos(startLat) * Math.cos(endLat) * Math.pow(Math.sin((endLon - startLon) / 2), 2)));
+
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps;
+    const A = Math.sin((1 - f) * d) / Math.sin(d);
+    const B = Math.sin(f * d) / Math.sin(d);
+
+    const x = A * Math.cos(startLat) * Math.cos(startLon) + B * Math.cos(endLat) * Math.cos(endLon);
+    const y = A * Math.cos(startLat) * Math.sin(startLon) + B * Math.cos(endLat) * Math.sin(endLon);
+    const z = A * Math.sin(startLat) + B * Math.sin(endLat);
+
+    const newLat = Math.atan2(z, Math.sqrt(x * x + y * y));
+    const newLon = Math.atan2(y, x);
+
+    points.push([toDegrees(newLat), toDegrees(newLon)]);
+  }
+
+  return points;
+}
+
+const showTooltip = (tooltipElement) => {
+  tooltipElement.style.visibility = 'visible';
+  tooltipElement.style.opacity = '1';
+};
+
+const hideTooltip = (tooltipElement) => {
+  tooltipElement.style.visibility = 'hidden';
+  tooltipElement.style.opacity = '0';
+};
+
+const updateArrow = (element, degree) => {
+  element.style.transform = `translateY(-50%) rotate(${degree}deg)`;
+};
+
+const updateCompassDisplay = () => {
+  const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
+  const inputQiblaDegree = parseFloat(ELEMENTS.qiblatInput.value) || 0;
+  const finalQiblatDegree = inputQiblaDegree;
+  
+  const firstPinLatLng = firstPin.getLatLng(); // Assuming firstPin is accessible here
+  const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : null;
+  const isNight = selectedDate ? isSunDown(selectedDate, firstPinLatLng.lat, firstPinLatLng.lng) : isSunDown(new Date(), firstPinLatLng.lat, firstPinLatLng.lng);
+
+  if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN || (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight)) {
+    ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
+  } else {
+    ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
+  }
+
+  ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${degree}deg)`;
+
+  updateArrow(ELEMENTS.blackArrowLine, degree);
+  updateArrow(ELEMENTS.blackArrowHead, degree);
+  updateArrow(ELEMENTS.arrowLine, finalQiblatDegree || 0);
+  updateArrow(ELEMENTS.arrowHead, finalQiblatDegree || 0);
+};
+
+const toggleDateTimeInputVisibility = () => {
+  ELEMENTS.dateTimeInput.style.display = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG ? DISPLAY.BLOCK : DISPLAY.NONE;
+};
+
+ELEMENTS.qiblatInput.addEventListener('input', () => {
+  updateCompassDisplay();
+  resetActivityTimer();
+});
+
+ELEMENTS.degreeInput.addEventListener('input', () => {
+  updateCompassDisplay();
+  resetActivityTimer();
+});
+
+// Reset the activity timer and make the circle non-sticky
+const resetActivityTimer = () => {
+  clearTimeout(activityTimeout);
+  const circleWrapper = document.querySelector('.sticky-wrapper');
+  circleWrapper.classList.add('non-sticky');
+  activityTimeout = setTimeout(() => {
+    circleWrapper.classList.remove('non-sticky');
+  }, 1000);
+}
+
+// Function to populate degree numbers and add event listeners
+const populateDegreeNumbers = () => {
+  const radius = ELEMENTS.circle.offsetWidth / 2;
+  const offset = 20;
+  for (let i = 0; i < 360; i += 10) {
+    const degreeNumber = document.createElement('div');
+    degreeNumber.className = 'degree-number';
+    degreeNumber.textContent = i;
+
+    const angle = i * (Math.PI / 180);
+    const x = radius + (radius + offset) * Math.cos(angle);
+    const y = radius + (radius + offset) * Math.sin(angle);
+
+    degreeNumber.style.left = `${x}px`;
+    degreeNumber.style.top = `${y}px`;
+    degreeNumber.style.transform = `translate(-50%, -50%) rotate(${i}deg)`;
+
+    degreeNumber.addEventListener('click', () => {
+      if (i === 100 || i === 200 || i === 270) {
+        showModal(i);
+      }
+    });
+
+    ELEMENTS.circle.appendChild(degreeNumber);
+  }
+};
+
+// Call the populateDegreeNumbers function to initialize the degree numbers
+populateDegreeNumbers();
+
+// Function to toggle sticky class on the circle
+const toggleStickyOnFocus = (inputElement, circleWrapper) => {
+  inputElement.addEventListener('focus', () => {
+    circleWrapper.classList.add('non-sticky');
+    setTimeout(() => {
+      inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  });
+
+  inputElement.addEventListener('blur', () => {
+    circleWrapper.classList.remove('non-sticky');
+    resetActivityTimer(); // Ensure the timer is reset on blur
+  });
+}
+
+// Function to toggle the map's circle class
+const toggleMapCircle = () => {
+  const mapElement = document.getElementById('map');
+  const circleContainer = document.querySelector('.circle-container');
+
+  if (circleContainer.contains(mapElement)) {
+    // Move the map outside the circle and restore original styles
+    document.querySelector('.map-fieldset').appendChild(mapElement);
+    mapElement.style.borderRadius = '0'; // Remove circular shape
+    mapElement.style.height = '50vh'; // Original height
+    mapElement.style.width = '100%'; // Original width
+    mapElement.style.position = 'relative'; // Reset position
+    mapElement.style.top = ''; // Reset top
+    mapElement.style.left = ''; // Reset left
+  } else {
+    // Move the map inside the circle and make it circular
+    circleContainer.appendChild(mapElement);
+    mapElement.classList.add('circle-map'); // Add the class for circular shape
+    alignMapWithCircle(); // Align map size with circle
+    mapElement.style.borderRadius = '50%'; // Make it circular
+    mapElement.style.position = 'absolute'; // Position absolutely
+    mapElement.style.top = '0'; // Align at top
+    mapElement.style.left = '0'; // Align at left
+  }
+}
+
+const alignMapWithCircle = () => {
+  const mapElement = document.getElementById('map');
+  const circleContainer = document.querySelector('.circle');
+
+  mapElement.style.width = `${circleContainer.offsetWidth}px`;
+  mapElement.style.height = `${circleContainer.offsetHeight}px`;
+}
+
+if (!isOnline()) {
+  updateBearingAndLines = () => {
+    console.warn("Offline mode: updateBearingAndLines cannot be executed.");
+  };
+}
+
+// Function to initialize the degree adjustment buttons
+const initializeDegreeButtons = () => {
+  const increaseButton = document.getElementById('increaseButton');
+  const decreaseButton = document.getElementById('decreaseButton');
+  const rotationValue = document.getElementById('rotationValue');
+  const mapElement = document.getElementById('map');
+
+  const updateRotation = () => {
+    rotationValue.textContent = `${degree}°`;
+    mapElement.style.transform = `rotate(${degree}deg)`;
+  }
+
+  const increaseDegree = () => {
+    degree = (degree + 0.5) % 360;
+    updateRotation();
+  }
+
+  const decreaseDegree = () => {
+    degree = (degree - 0.5 + 360) % 360; // Ensure the value stays positive
+    updateRotation();
+  }
+
+  const handleButtonHold = (callback) => {
+    callback();
+    holdInterval = setInterval(() => {
+      callback();
+      speed = Math.max(30, speed - 10000000); // Decrease interval time to speed up
+      clearInterval(holdInterval); // Clear previous interval
+      holdInterval = setInterval(callback, speed); // Set new faster interval
+    }, speed);
+  }
+
+  increaseButton.addEventListener('mousedown', () => {
+    speed = 1000; // Reset speed
+    handleButtonHold(increaseDegree);
+  });
+
+  decreaseButton.addEventListener('mousedown', () => {
+    speed = 1000; // Reset speed
+    handleButtonHold(decreaseDegree);
+  });
+
+  document.addEventListener('mouseup', () => {
+    clearInterval(holdInterval);
+  });
+
+  // For touch devices
+  increaseButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    speed = 1000; // Reset speed
+    handleButtonHold(increaseDegree);
+  });
+
+  decreaseButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    speed = 1000; // Reset speed
+    handleButtonHold(decreaseDegree);
+  });
+
+  document.addEventListener('touchend', () => {
+    clearInterval(holdInterval);
+  });
+}
+
+const showInstallPromotion = () => {
+  if (deferredPrompt) {
+    const installBanner = document.createElement('div');
+    installBanner.classList.add('install-banner');
+    installBanner.textContent = 'Install this app on your device?';
+
+    installBanner.addEventListener('click', () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        console.log(choiceResult.outcome === 'accepted' ? 'User accepted the install prompt' : 'User dismissed the install prompt');
+        installBanner.remove();
+        deferredPrompt = null;
+      });
+    });
+
+    document.body.appendChild(installBanner);
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPromotion();
+});
+
+const isSunDown = (date, latitude, longitude) => {
+  const sunTimes = SunCalc.getTimes(date, latitude, longitude);
+  const currentTime = date.getTime();
+  return currentTime < sunTimes.sunrise.getTime() || currentTime > sunTimes.sunset.getTime();
+}
+</script>
+</body>
 </html>
