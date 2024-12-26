@@ -1125,13 +1125,7 @@ let map; // Declare map here to make it accessible globally
 let updateButtonPosition; // Declare the function variable here
 
 window.onload = () => {
-checkNetworkStatus(); // Check network status on load
-
-  if (isOnline()) {
-    initializeMapIfOnline();
-  } else {
-    document.getElementById('map').style.display = 'none';
-  }
+  checkNetworkStatus(); // Check network status on load
 
   const circleWrapper = document.querySelector('.sticky-wrapper');
   toggleStickyOnFocus(ELEMENTS.degreeInput, circleWrapper);
@@ -1155,13 +1149,13 @@ checkNetworkStatus(); // Check network status on load
     }
   });
 
-  // change sector color
+  // Change sector color
   const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
-  
-  // Add event listeners for buttons
+
+  // Add event listeners for offline data handling
   const centerDotButton = document.getElementById('centerDotButton');
   const updateLocationButton = document.getElementById('updateLocationButton');
 
@@ -1177,10 +1171,15 @@ checkNetworkStatus(); // Check network status on load
           Longitude: ${longitude.toFixed(6)}
         `;
         document.getElementById('firstPinData').style.display = 'none';
-        const offlineDataElement = document.createElement('div');
-        offlineDataElement.id = 'offlineCurrentData';
+        let offlineDataElement = document.getElementById('offlineCurrentData');
+        
+        if (!offlineDataElement) {
+          offlineDataElement = document.createElement('div');
+          offlineDataElement.id = 'offlineCurrentData';
+          document.querySelector('.map-fieldset').appendChild(offlineDataElement);
+        }
+        
         offlineDataElement.innerHTML = offlineData;
-        document.querySelector('.map-fieldset').appendChild(offlineDataElement);
       },
       error => {
         console.error('Error getting location:', error);
@@ -1190,13 +1189,13 @@ checkNetworkStatus(); // Check network status on load
   };
 
   centerDotButton.addEventListener('click', () => {
-    if (!isOnline()) {
+    if (!navigator.onLine) {
       handleOfflineData();
     }
   });
 
   updateLocationButton.addEventListener('click', () => {
-    if (!isOnline()) {
+    if (!navigator.onLine) {
       handleOfflineData();
     }
   });
