@@ -1158,9 +1158,6 @@ window.onload = () => {
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
-  
-  // Add event listener to the centerDotButton for offline GPS location update
-  document.getElementById('centerDotButton').addEventListener('click', updateLocationWithGPS);
 };
 
 const updateSectorColors = () => {
@@ -1349,33 +1346,61 @@ updateButtonPosition();
   });
 
   const updateLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const { latitude: userLat, longitude: userLng } = position.coords;
-          const zoomLevel = 19;
-          firstPin.setLatLng([userLat, userLng]);
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const { latitude: userLat, longitude: userLng } = position.coords;
+        const zoomLevel = 19;
+        
+        // Update the firstPin location
+        firstPin.setLatLng([userLat, userLng]);
+
+        // Calculate the sun azimuth using the SunCalc library
+        const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+        const sunPosition = SunCalc.getPosition(selectedDate, userLat, userLng);
+        const sunAzimuth = sunPosition.azimuth * 180 / Math.PI + 180;
+
+        // Update the degree input with the sun azimuth
+        ELEMENTS.degreeInput.value = sunAzimuth.toFixed(2);
+
+        // Update the compass display
+        updateCompassDisplay();
+
+        // If the map is available, update the view
+        if (map) {
           map.setView([userLat, userLng], zoomLevel);
           updateBearingAndLines('firstPin');
           updateButtonPosition();
-        },
-        () => {
-          alert('Unable to retrieve your location. Please enable location services.');
+        } else {
+          // Handle when map is not available
+          console.log(`Current Location: Latitude ${userLat}, Longitude ${userLng}`);
+          console.log(`Sun Azimuth: ${sunAzimuth.toFixed(2)}°`);
+        }
+      },
+      () => {
+        alert('Unable to retrieve your location. Please enable location services.');
+        if (map) {
           firstPin.setLatLng(defaultLocation);
           map.setView(defaultLocation, 19);
           updateBearingAndLines('firstPin');
           updateButtonPosition();
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  } else {
+    alert('Geolocation is not supported by this browser.');
+    if (map) {
       firstPin.setLatLng(defaultLocation);
       map.setView(defaultLocation, 19);
       updateBearingAndLines('firstPin');
       updateButtonPosition();
     }
   }
+}
+
+// Add event listener to the centerDotButton
+document.getElementById('centerDotButton').addEventListener('click', updateLocation);
 
   const addClickEventToButton = (buttonId, handler) => {
     document.getElementById(buttonId).addEventListener('click', handler);
@@ -1988,37 +2013,6 @@ const isSunDown = (date, latitude, longitude) => {
   const sunTimes = SunCalc.getTimes(date, latitude, longitude);
   const currentTime = date.getTime();
   return currentTime < sunTimes.sunrise.getTime() || currentTime > sunTimes.sunset.getTime();
-}
-
-// Function to update user's location using GPS and calculate sun azimuth
-const updateLocationWithGPS = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const userLatLng = [latitude, longitude];
-
-        // Set the firstPin position to the user's current location
-        firstPin.setLatLng(userLatLng);
-        map.setView(userLatLng, 19); // Adjust zoom level as needed
-
-        // Update the bearing and lines based on the new location
-        updateBearingAndLines('firstPin');
-        
-        // Compute and update the sun azimuth
-        const sunAzimuth = updateSunAzimuth({ lat: latitude, lng: longitude });
-        ELEMENTS.degreeInput.value = sunAzimuth.toFixed(2);
-        updateCompassDisplay();
-      },
-      (error) => {
-        console.error('Error obtaining location:', error);
-        alert('Unable to retrieve your location. Ensure GPS is enabled.');
-      },
-      { enableHighAccuracy: true }
-    );
-  } else {
-    alert('Geolocation is not supported by this browser.');
-  }
 }
 </script>
 </body>
