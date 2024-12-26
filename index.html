@@ -1172,8 +1172,8 @@ window.onload = () => {
             Longitude: ${longitude.toFixed(6)}
           `;
           document.getElementById('firstPinData').style.display = 'none';
+
           let offlineDataElement = document.getElementById('offlineCurrentData');
-          
           if (!offlineDataElement) {
             offlineDataElement = document.createElement('div');
             offlineDataElement.id = 'offlineCurrentData';
@@ -1181,6 +1181,7 @@ window.onload = () => {
           }
           
           offlineDataElement.innerHTML = offlineData;
+          offlineDataElement.style.display = 'block'; // Ensure it is visible
         },
         error => {
           console.error('Error getting location:', error);
