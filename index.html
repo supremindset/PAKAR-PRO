@@ -1125,6 +1125,8 @@ let map; // Declare map here to make it accessible globally
 let updateButtonPosition; // Declare the function variable here
 
 window.onload = () => {
+checkNetworkStatus(); // Check network status on load
+
   if (isOnline()) {
     initializeMapIfOnline();
   } else {
@@ -1158,6 +1160,46 @@ window.onload = () => {
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
+  
+  // Add event listeners for buttons
+  const centerDotButton = document.getElementById('centerDotButton');
+  const updateLocationButton = document.getElementById('updateLocationButton');
+
+  const handleOfflineData = () => {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude } = position.coords;
+        const currentDate = new Date();
+        const offlineData = `
+          Date: ${currentDate.toLocaleDateString()}<br/>
+          Time: ${currentDate.toLocaleTimeString()}<br/>
+          Latitude: ${latitude.toFixed(6)}<br/>
+          Longitude: ${longitude.toFixed(6)}
+        `;
+        document.getElementById('firstPinData').style.display = 'none';
+        const offlineDataElement = document.createElement('div');
+        offlineDataElement.id = 'offlineCurrentData';
+        offlineDataElement.innerHTML = offlineData;
+        document.querySelector('.map-fieldset').appendChild(offlineDataElement);
+      },
+      error => {
+        console.error('Error getting location:', error);
+        alert('Unable to retrieve location.');
+      }
+    );
+  };
+
+  centerDotButton.addEventListener('click', () => {
+    if (!isOnline()) {
+      handleOfflineData();
+    }
+  });
+
+  updateLocationButton.addEventListener('click', () => {
+    if (!isOnline()) {
+      handleOfflineData();
+    }
+  });
 };
 
 const updateSectorColors = () => {
@@ -1346,43 +1388,33 @@ updateButtonPosition();
   });
 
   const updateLocation = () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const latitude = position.coords.latitude.toFixed(6);
-        const longitude = position.coords.longitude.toFixed(6);
-        
-        if (navigator.onLine) {
-          // Online mode: Update map and UI
-          if (firstPin) {
-            firstPin.setLatLng([latitude, longitude]);
-            map.setView([latitude, longitude], 19);
-          }
-          document.getElementById('firstPinData').innerHTML = `
-            Latitude: ${latitude} (${toDMS(latitude, true)})<br>
-            Longitude: ${longitude} (${toDMS(longitude, false)})<br>
-          `;
-        } else {
-          // Offline mode: Update only the UI
-          document.getElementById('firstPinData').innerHTML = `
-            Latitude: ${latitude} (offline)<br>
-            Longitude: ${longitude} (offline)<br>
-          `;
-        }
-      },
-      (error) => {
-        console.error('Error obtaining location: ', error);
-        alert('Unable to retrieve your location. Please enable location services.');
-      },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-    );
-  } else {
-    console.log('Geolocation is not supported by this browser.');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude: userLat, longitude: userLng } = position.coords;
+          const zoomLevel = 19;
+          firstPin.setLatLng([userLat, userLng]);
+          map.setView([userLat, userLng], zoomLevel);
+          updateBearingAndLines('firstPin');
+          updateButtonPosition();
+        },
+        () => {
+          alert('Unable to retrieve your location. Please enable location services.');
+          firstPin.setLatLng(defaultLocation);
+          map.setView(defaultLocation, 19);
+          updateBearingAndLines('firstPin');
+          updateButtonPosition();
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+      firstPin.setLatLng(defaultLocation);
+      map.setView(defaultLocation, 19);
+      updateBearingAndLines('firstPin');
+      updateButtonPosition();
+    }
   }
-};
-
-// Call updateLocation when needed, for example on a button click
-document.getElementById('updateLocationButton').addEventListener('click', updateLocation);
 
   const addClickEventToButton = (buttonId, handler) => {
     document.getElementById(buttonId).addEventListener('click', handler);
