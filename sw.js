@@ -1,5 +1,5 @@
 var GHPATH = '/PAKAR-PRO';
-var CACHE_NAME = 'cache-v1.08';
+var CACHE_NAME = 'cache-v1.09';
 var urlsToCache = [
   `${GHPATH}/`, // Cache the root path
   `${GHPATH}/index.html`, // Cache your main HTML file
