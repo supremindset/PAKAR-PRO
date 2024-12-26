@@ -1158,6 +1158,9 @@ window.onload = () => {
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
+  
+  // Add event listener to the centerDotButton for offline GPS location update
+  document.getElementById('centerDotButton').addEventListener('click', updateLocationWithGPS);
 };
 
 const updateSectorColors = () => {
@@ -1755,66 +1758,20 @@ const updateArrow = (element, degree) => {
   element.style.transform = `translateY(-50%) rotate(${degree}deg)`;
 };
 
-const centerDotButton = document.getElementById('centerDotButton');
-
-centerDotButton.addEventListener('click', () => {
-  if (!navigator.onLine) {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          const currentDate = new Date();
-          
-          // Calculate sun azimuth using SunCalc
-          const sunPosition = SunCalc.getPosition(currentDate, latitude, longitude);
-          const sunAzimuth = sunPosition.azimuth * 180 / Math.PI + 180;
-          
-          // Display sun azimuth and Qibla direction
-          displaySunAzimuth(sunAzimuth);
-        },
-        error => {
-          alert('Unable to retrieve your location. Please enable location services.');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  }
-});
-
-function displaySunAzimuth(azimuth) {
-  const azimuthElement = document.createElement('div');
-  azimuthElement.textContent = `Sun Azimuth: ${azimuth.toFixed(2)}°`;
-  azimuthElement.style.position = 'absolute';
-  azimuthElement.style.top = '10px';
-  azimuthElement.style.left = '10px';
-  azimuthElement.style.backgroundColor = '#f7f9fc';
-  azimuthElement.style.padding = '10px';
-  azimuthElement.style.border = '1px solid #2980b9';
-  azimuthElement.style.borderRadius = '5px';
-  document.body.appendChild(azimuthElement);
-
-  // Update the compass or UI element to show Qibla direction
-  updateCompassDisplay(azimuth);
-}
-
 const updateCompassDisplay = () => {
   const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
   const inputQiblaDegree = parseFloat(ELEMENTS.qiblatInput.value) || 0;
   const finalQiblatDegree = inputQiblaDegree;
 
-  if (!navigator.onLine) { // Check if the user is offline
-    ELEMENTS.circle.style.transform = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN 
-      ? `rotate(${-90 - degree}deg)` 
-      : `rotate(${90 - degree}deg)`;
+  if (!isOnline()) {
+    ELEMENTS.circle.style.transform = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ? 
+      `rotate(${-90 - degree}deg)` : `rotate(${90 - degree}deg)`;
   } else {
-    const firstPinLatLng = firstPin.getLatLng();
-    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
-    const isNight = isSunDown(selectedDate, firstPinLatLng.lat, firstPinLatLng.lng);
+    const firstPinLatLng = firstPin.getLatLng(); // Assuming firstPin is accessible here
+    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : null;
+    const isNight = selectedDate ? isSunDown(selectedDate, firstPinLatLng.lat, firstPinLatLng.lng) : isSunDown(new Date(), firstPinLatLng.lat, firstPinLatLng.lng);
 
-    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN || 
-        (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight)) {
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN || (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight)) {
       ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
     } else {
       ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
@@ -1823,29 +1780,10 @@ const updateCompassDisplay = () => {
 
   ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${degree}deg)`;
 
-  // Update the arrows based on the current degree and Qibla direction
   updateArrow(ELEMENTS.blackArrowLine, degree);
   updateArrow(ELEMENTS.blackArrowHead, degree);
   updateArrow(ELEMENTS.arrowLine, finalQiblatDegree || 0);
   updateArrow(ELEMENTS.arrowHead, finalQiblatDegree || 0);
-
-  // Additional logic to adjust display for offline mode using current location and sun azimuth
-  if (!navigator.onLine) {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(position => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const currentDate = new Date();
-        
-        const sunPosition = SunCalc.getPosition(currentDate, latitude, longitude);
-        const sunAzimuth = sunPosition.azimuth * 180 / Math.PI + 180;
-        
-        // Update the compass to show the sun's azimuth
-        ELEMENTS.arrowLine.style.transform = `translateY(-50%) rotate(${sunAzimuth}deg)`;
-        ELEMENTS.arrowHead.style.transform = `translateY(-50%) rotate(${sunAzimuth}deg)`;
-      });
-    }
-  }
 };
 
 const toggleDateTimeInputVisibility = () => {
@@ -2050,6 +1988,37 @@ const isSunDown = (date, latitude, longitude) => {
   const sunTimes = SunCalc.getTimes(date, latitude, longitude);
   const currentTime = date.getTime();
   return currentTime < sunTimes.sunrise.getTime() || currentTime > sunTimes.sunset.getTime();
+}
+
+// Function to update user's location using GPS and calculate sun azimuth
+const updateLocationWithGPS = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const userLatLng = [latitude, longitude];
+
+        // Set the firstPin position to the user's current location
+        firstPin.setLatLng(userLatLng);
+        map.setView(userLatLng, 19); // Adjust zoom level as needed
+
+        // Update the bearing and lines based on the new location
+        updateBearingAndLines('firstPin');
+        
+        // Compute and update the sun azimuth
+        const sunAzimuth = updateSunAzimuth({ lat: latitude, lng: longitude });
+        ELEMENTS.degreeInput.value = sunAzimuth.toFixed(2);
+        updateCompassDisplay();
+      },
+      (error) => {
+        console.error('Error obtaining location:', error);
+        alert('Unable to retrieve your location. Ensure GPS is enabled.');
+      },
+      { enableHighAccuracy: true }
+    );
+  } else {
+    alert('Geolocation is not supported by this browser.');
+  }
 }
 </script>
 </body>
