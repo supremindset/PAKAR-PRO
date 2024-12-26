@@ -1189,13 +1189,13 @@ window.onload = () => {
   };
 
   centerDotButton.addEventListener('click', () => {
-    if (!navigator.onLine) {
+    if (!isOnline()) {
       handleOfflineData();
     }
   });
 
   updateLocationButton.addEventListener('click', () => {
-    if (!navigator.onLine) {
+    if (!isOnline()) {
       handleOfflineData();
     }
   });
