@@ -1160,45 +1160,61 @@ window.onload = () => {
   const updateLocationButton = document.getElementById('updateLocationButton');
 
   const handleOfflineData = () => {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude } = position.coords;
-        const currentDate = new Date();
-        const offlineData = `
-          Date: ${currentDate.toLocaleDateString()}<br/>
-          Time: ${currentDate.toLocaleTimeString()}<br/>
-          Latitude: ${latitude.toFixed(6)}<br/>
-          Longitude: ${longitude.toFixed(6)}
-        `;
-        document.getElementById('firstPinData').style.display = 'none';
-        let offlineDataElement = document.getElementById('offlineCurrentData');
-        
-        if (!offlineDataElement) {
-          offlineDataElement = document.createElement('div');
-          offlineDataElement.id = 'offlineCurrentData';
-          document.querySelector('.map-fieldset').appendChild(offlineDataElement);
-        }
-        
-        offlineDataElement.innerHTML = offlineData;
-      },
-      error => {
-        console.error('Error getting location:', error);
-        alert('Unable to retrieve location.');
-      }
-    );
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          const currentDate = new Date();
+          const offlineData = `
+            Date: ${currentDate.toLocaleDateString()}<br/>
+            Time: ${currentDate.toLocaleTimeString()}<br/>
+            Latitude: ${latitude.toFixed(6)}<br/>
+            Longitude: ${longitude.toFixed(6)}
+          `;
+          document.getElementById('firstPinData').style.display = 'none';
+          let offlineDataElement = document.getElementById('offlineCurrentData');
+          
+          if (!offlineDataElement) {
+            offlineDataElement = document.createElement('div');
+            offlineDataElement.id = 'offlineCurrentData';
+            document.querySelector('.map-fieldset').appendChild(offlineDataElement);
+          }
+          
+          offlineDataElement.innerHTML = offlineData;
+        },
+        error => {
+          console.error('Error getting location:', error);
+          alert('Unable to retrieve location. Please ensure location services are enabled.');
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
   };
 
   centerDotButton.addEventListener('click', () => {
-    if (!isOnline()) {
+    if (!navigator.onLine) {
       handleOfflineData();
     }
   });
 
   updateLocationButton.addEventListener('click', () => {
-    if (!isOnline()) {
+    if (!navigator.onLine) {
       handleOfflineData();
     }
   });
+};
+
+// Function to check network status and update map visibility
+const checkNetworkStatus = () => {
+  const mapElement = document.getElementById('map');
+  if (navigator.onLine) {
+    mapElement.style.display = 'block';
+    initializeMapIfOnline();
+  } else {
+    mapElement.style.display = 'none';
+  }
 };
 
 const updateSectorColors = () => {
@@ -1240,16 +1256,6 @@ const loadLeafletResources = (callback) => {
   document.head.appendChild(leafletCSS);
 
   loadScript('https://unpkg.com/leaflet/dist/leaflet.js', callback);
-}
-
-const checkNetworkStatus = () => {
-  const mapElement = document.getElementById('map');
-  if (navigator.onLine) {
-    mapElement.style.display = 'block';
-    initializeMapIfOnline();
-  } else {
-    mapElement.style.display = 'none';
-  }
 }
 
 window.addEventListener('online', checkNetworkStatus);
