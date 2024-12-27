@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PAKAR QIBLAT</title>
-  <link rel="canonical" href="https://supremindset.github.io/PAKAR-PRO/" />
-  <link rel="manifest" href="/PAKAR-PRO/manifest.json">
+  <link rel="canonical" href="https://supremindset.github.io/PAKAR/" />
+  <link rel="manifest" href="/PAKAR/manifest.json">
   <script>
     if (navigator.serviceWorker) {
       navigator.serviceWorker.register(
-        '/PAKAR-PRO/sw.js',
-        {scope: '/PAKAR-PRO/'}
+        '/PAKAR/sw.js',
+        {scope: '/PAKAR/'}
       )
     }
   </script>
@@ -1125,7 +1125,11 @@ let map; // Declare map here to make it accessible globally
 let updateButtonPosition; // Declare the function variable here
 
 window.onload = () => {
-  checkNetworkStatus(); // Check network status on load
+  if (isOnline()) {
+    initializeMapIfOnline();
+  } else {
+    document.getElementById('map').style.display = 'none';
+  }
 
   const circleWrapper = document.querySelector('.sticky-wrapper');
   toggleStickyOnFocus(ELEMENTS.degreeInput, circleWrapper);
@@ -1149,73 +1153,29 @@ window.onload = () => {
     }
   });
 
-  // Change sector color
-  const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
-  kaedahQiblatSelect.addEventListener('change', updateSectorColors);
-
-  updateSectorColors(); // Call once on load to set initial colors
-
-  // Add event listeners for offline data handling
-  const centerDotButton = document.getElementById('centerDotButton');
-  const updateLocationButton = document.getElementById('updateLocationButton');
-
-  const handleOfflineData = () => {
+  // Add the event listener for the centerDotButton
+  document.getElementById('centerDotButton').addEventListener('click', () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
           const { latitude, longitude } = position.coords;
-          const currentDate = new Date();
-          const offlineData = `
-            Date: ${currentDate.toLocaleDateString()}<br/>
-            Time: ${currentDate.toLocaleTimeString()}<br/>
-            Latitude: ${latitude.toFixed(6)}<br/>
-            Longitude: ${longitude.toFixed(6)}
-          `;
-          document.getElementById('firstPinData').style.display = 'none';
-
-          let offlineDataElement = document.getElementById('offlineCurrentData');
-          if (!offlineDataElement) {
-            offlineDataElement = document.createElement('div');
-            offlineDataElement.id = 'offlineCurrentData';
-            document.querySelector('.map-fieldset').appendChild(offlineDataElement);
-          }
-          
-          offlineDataElement.innerHTML = offlineData;
-          offlineDataElement.style.display = 'block'; // Ensure it is visible
+          alert(`Current Location:\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}`);
         },
         error => {
-          console.error('Error getting location:', error);
-          alert('Unable to retrieve location. Please ensure location services are enabled.');
+          alert('Unable to retrieve your location. Please check your location settings.');
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     } else {
       alert('Geolocation is not supported by this browser.');
     }
-  };
-
-  centerDotButton.addEventListener('click', () => {
-    if (!navigator.onLine) {
-      handleOfflineData();
-    }
   });
 
-  updateLocationButton.addEventListener('click', () => {
-    if (!navigator.onLine) {
-      handleOfflineData();
-    }
-  });
-};
+  // Change sector color
+  const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
+  kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
-// Function to check network status and update map visibility
-const checkNetworkStatus = () => {
-  const mapElement = document.getElementById('map');
-  if (navigator.onLine) {
-    mapElement.style.display = 'block';
-    initializeMapIfOnline();
-  } else {
-    mapElement.style.display = 'none';
-  }
+  updateSectorColors(); // Call once on load to set initial colors
 };
 
 const updateSectorColors = () => {
@@ -1257,6 +1217,16 @@ const loadLeafletResources = (callback) => {
   document.head.appendChild(leafletCSS);
 
   loadScript('https://unpkg.com/leaflet/dist/leaflet.js', callback);
+}
+
+const checkNetworkStatus = () => {
+  const mapElement = document.getElementById('map');
+  if (navigator.onLine) {
+    mapElement.style.display = 'block';
+    initializeMapIfOnline();
+  } else {
+    mapElement.style.display = 'none';
+  }
 }
 
 window.addEventListener('online', checkNetworkStatus);
