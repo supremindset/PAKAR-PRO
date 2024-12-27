@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PAKAR QIBLAT</title>
-  <link rel="canonical" href="https://supremindset.github.io/PAKAR/" />
-  <link rel="manifest" href="/PAKAR/manifest.json">
+  <link rel="canonical" href="https://supremindset.github.io/PAKAR-PRO/" />
+  <link rel="manifest" href="/PAKAR-PRO/manifest.json">
   <script>
     if (navigator.serviceWorker) {
       navigator.serviceWorker.register(
-        '/PAKAR/sw.js',
-        {scope: '/PAKAR/'}
+        '/PAKAR-PRO/sw.js',
+        {scope: '/PAKAR-PRO/'}
       )
     }
   </script>
@@ -1130,6 +1130,24 @@ window.onload = () => {
     initializeMapIfOnline();
   } else {
     document.getElementById('map').style.display = 'none';
+    // Add event listener for the currentOfflineLocation button
+  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
+        },
+        (error) => {
+          alert('Error obtaining location. Please ensure location services are enabled.');
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  });
   }
 
   const circleWrapper = document.querySelector('.sticky-wrapper');
@@ -1159,25 +1177,6 @@ window.onload = () => {
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
-
-  // Add event listener for the currentOfflineLocation button
-  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
-        },
-        (error) => {
-          alert('Error obtaining location. Please ensure location services are enabled.');
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  });
 };
 
 const updateSectorColors = () => {
