@@ -555,6 +555,7 @@
       <input class="custom-select" type="number" id="qiblatInput" placeholder="Qiblat" min="0" max="360" step="0.1">
       <input class="custom-select" type="datetime-local" id="dateTimeInput" placeholder="Select Date and Time">
       <button id="toggleMapCircle" class="location-btn">Fit Map to Circle</button>
+      <button id="currentOfflineLocation" class="location-btn">Show Current Location</button> <!-- New Button -->
     </div>
   </fieldset>
   <br>
@@ -1153,16 +1154,23 @@ window.onload = () => {
     }
   });
 
-  // Add the event listener for the centerDotButton
-  document.getElementById('centerDotButton').addEventListener('click', () => {
+  // change sector color
+  const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
+  kaedahQiblatSelect.addEventListener('change', updateSectorColors);
+
+  updateSectorColors(); // Call once on load to set initial colors
+
+  // Add event listener for the currentOfflineLocation button
+  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        position => {
-          const { latitude, longitude } = position.coords;
-          alert(`Current Location:\nLatitude: ${latitude.toFixed(6)}\nLongitude: ${longitude.toFixed(6)}`);
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
         },
-        error => {
-          alert('Unable to retrieve your location. Please check your location settings.');
+        (error) => {
+          alert('Error obtaining location. Please ensure location services are enabled.');
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
@@ -1170,12 +1178,6 @@ window.onload = () => {
       alert('Geolocation is not supported by this browser.');
     }
   });
-
-  // Change sector color
-  const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
-  kaedahQiblatSelect.addEventListener('change', updateSectorColors);
-
-  updateSectorColors(); // Call once on load to set initial colors
 };
 
 const updateSectorColors = () => {
