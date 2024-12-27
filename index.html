@@ -1130,24 +1130,6 @@ window.onload = () => {
     initializeMapIfOnline();
   } else {
     document.getElementById('map').style.display = 'none';
-    // Add event listener for the currentOfflineLocation button
-  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
-        },
-        (error) => {
-          alert('Error obtaining location. Please ensure location services are enabled.');
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  });
   }
 
   const circleWrapper = document.querySelector('.sticky-wrapper');
@@ -1177,6 +1159,25 @@ window.onload = () => {
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
+
+  // Add event listener for the currentOfflineLocation button
+  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
+        },
+        (error) => {
+          alert('Error obtaining location. Please ensure location services are enabled.');
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert('Geolocation is not supported by this browser.');
+    }
+  });
 };
 
 const updateSectorColors = () => {
