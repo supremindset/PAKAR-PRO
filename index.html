@@ -548,14 +548,16 @@
     <legend>Qiblat Settings</legend>
     <div class="data-inputs">
       <select class="custom-select" id="kaedahQiblat">
-        <option value="bayang" selected>Bayang-Bayang</option>
-        <option value="bangunan">Bearing Bangunan</option>
-      </select>
+  <option value="bayang" selected>Bayang-Bayang</option>
+  <option value="bangunan" style="display: none;">Bearing Bangunan</option>
+  <option value="offlineLatLong">Offline Lat/Long</option>
+</select>
+<input class="custom-select" type="number" id="latInput" placeholder="Latitude" step="0.000001">
+<input class="custom-select" type="number" id="longInput" placeholder="Longitude" step="0.000001">
       <input class="custom-select" type="number" id="degreeInput" placeholder="Sun Azimuth / Bearing Bangunan" min="0" max="360" step="0.1">
       <input class="custom-select" type="number" id="qiblatInput" placeholder="Qiblat" min="0" max="360" step="0.1">
       <input class="custom-select" type="datetime-local" id="dateTimeInput" placeholder="Select Date and Time">
       <button id="toggleMapCircle" class="location-btn">Fit Map to Circle</button>
-      <button id="currentOfflineLocation" class="location-btn">Show Current Location</button> <!-- New Button -->
     </div>
   </fieldset>
   <br>
@@ -947,7 +949,41 @@ else window.SunCalc = SunCalc;
 }());
   }());
 </script>
+
 <script>
+document.getElementById('kaedahQiblat').addEventListener('change', function() {
+      const selectedValue = this.value;
+      const degreeInput = document.getElementById('degreeInput');
+      const qiblatInput = document.getElementById('qiblatInput');
+      const dateTimeInput = document.getElementById('dateTimeInput');
+      const latInput = document.getElementById('latInput');
+      const longInput = document.getElementById('longInput');
+
+      // Hide all inputs initially
+      degreeInput.style.display = 'none';
+      qiblatInput.style.display = 'none';
+      dateTimeInput.style.display = 'none';
+      latInput.style.display = 'none';
+      longInput.style.display = 'none';
+
+      // Show inputs based on selected value
+      if (selectedValue === 'bayang') {
+        degreeInput.style.display = 'block';
+        qiblatInput.style.display = 'block';
+        dateTimeInput.style.display = 'block';
+      } else if (selectedValue === 'bangunan') {
+        degreeInput.style.display = 'block';
+        qiblatInput.style.display = 'block';
+      } else if (selectedValue === 'offlineLatLong') {
+        latInput.style.display = 'block';
+        longInput.style.display = 'block';
+        dateTimeInput.style.display = 'block';
+      }
+    });
+
+    // Trigger the change event on page load to set initial visibility
+    document.getElementById('kaedahQiblat').dispatchEvent(new Event('change'));
+    
 const modalData = [
   {
     image: "image1-url.jpg",
@@ -1090,7 +1126,7 @@ const loadScript = (url, callback) => {
 
 // Array of birthdays
   const birthdays = [
-    { name: "Ustaz Latif", birthdate: "12-21" }, // December 21st
+    { name: "Abi", birthdate: "01-01" }, // December 21st
     { name: "Bob", birthdate: "01-15" },   // January 15th
     // Add more birthdays here
   ];
@@ -1132,6 +1168,13 @@ window.onload = () => {
     document.getElementById('map').style.display = 'none';
   }
 
+  // Initialize the firstPin and secondPin only if the map is loaded
+  if (typeof L !== 'undefined' && map) {
+    const defaultLocation = [2.8126, 101.5018];
+    firstPin = L.marker(defaultLocation, { icon: redIcon, draggable: true }).addTo(map);
+    secondPin = L.marker([3.1390, 101.6869], { icon: yellowIcon, draggable: true }).addTo(map);
+  }
+
   const circleWrapper = document.querySelector('.sticky-wrapper');
   toggleStickyOnFocus(ELEMENTS.degreeInput, circleWrapper);
   toggleStickyOnFocus(ELEMENTS.qiblatInput, circleWrapper);
@@ -1154,30 +1197,11 @@ window.onload = () => {
     }
   });
 
-  // change sector color
+  // Change sector color
   const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
   kaedahQiblatSelect.addEventListener('change', updateSectorColors);
 
   updateSectorColors(); // Call once on load to set initial colors
-
-  // Add event listener for the currentOfflineLocation button
-  document.getElementById('currentOfflineLocation').addEventListener('click', () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          alert(`Latitude: ${latitude.toFixed(6)}, Longitude: ${longitude.toFixed(6)}`);
-        },
-        (error) => {
-          alert('Error obtaining location. Please ensure location services are enabled.');
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert('Geolocation is not supported by this browser.');
-    }
-  });
 };
 
 const updateSectorColors = () => {
@@ -1191,7 +1215,8 @@ const updateSectorColors = () => {
 
   const colors = {
     bayang: ['rgba(34, 139, 34, 0.8)', 'rgba(34, 139, 34, 0.2)'],
-    bangunan: ['rgba(255, 223, 70, 0.8)', 'rgba(255, 223, 70, 0.2)']
+    bangunan: ['rgba(255, 223, 70, 0.8)', 'rgba(255, 223, 70, 0.2)'],
+    offlineLatLong: ['rgba(255, 165, 0, 0.8)', 'rgba(255, 165, 0, 0.2)']
   };
 
   if (kaedahQiblatValue in colors) {
@@ -1700,6 +1725,8 @@ const ELEMENTS = {
   blackArrowHead: document.getElementById('blackArrowHead'),
   kaedahQiblat: document.getElementById('kaedahQiblat'),
   degreeInput: document.getElementById('degreeInput'),
+  latInput: document.getElementById('latInput'),  // Added for latitude input
+  longInput: document.getElementById('longInput'), // Added for longitude input
   degreeTooltip: document.getElementById('degreeTooltip'),
   qiblatInput: document.getElementById('qiblatInput'),
   qiblatTooltip: document.getElementById('qiblatTooltip'),
@@ -1715,7 +1742,8 @@ const DISPLAY = {
 
 const QIBLAT_METHODS = {
   BANGUNAN: 'bangunan',
-  BAYANG: 'bayang'
+  BAYANG: 'bayang',
+  OFFLINELATLONG: 'offlineLatLong'
 };
 
 const toRadians = (degrees) => degrees * Math.PI / 180;
@@ -1780,19 +1808,21 @@ const updateCompassDisplay = () => {
   const inputQiblaDegree = parseFloat(ELEMENTS.qiblatInput.value) || 0;
   const finalQiblatDegree = inputQiblaDegree;
 
-  if (!isOnline()) {
-    ELEMENTS.circle.style.transform = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ? 
+  if (!isOnline() || !firstPin) { // Check if firstPin is defined
+    ELEMENTS.circle.style.transform = ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ?
       `rotate(${-90 - degree}deg)` : `rotate(${90 - degree}deg)`;
   } else {
-    const firstPinLatLng = firstPin.getLatLng(); // Assuming firstPin is accessible here
-    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : null;
-    const isNight = selectedDate ? isSunDown(selectedDate, firstPinLatLng.lat, firstPinLatLng.lng) : isSunDown(new Date(), firstPinLatLng.lat, firstPinLatLng.lng);
+    const firstPinLatLng = firstPin.getLatLng(); // Safely access firstPin.getLatLng
+    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+    const isNight = isSunDown(selectedDate, firstPinLatLng.lat, firstPinLatLng.lng);
 
-    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN || (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight)) {
-      ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
-    } else {
-      ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
-    }
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN || 
+    (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight) || 
+    (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.OFFLINELATLONG && isNight)) {
+  ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
+} else {
+  ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
+}
   }
 
   ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${degree}deg)`;
@@ -2006,6 +2036,91 @@ const isSunDown = (date, latitude, longitude) => {
   const currentTime = date.getTime();
   return currentTime < sunTimes.sunrise.getTime() || currentTime > sunTimes.sunset.getTime();
 }
+
+// Function to update compass display, bearings, and other elements
+const updateDisplayForOfflineLatLong = () => {
+  const lat = parseFloat(ELEMENTS.latInput.value);
+  const long = parseFloat(ELEMENTS.longInput.value);
+  const dateTime = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+
+  if (!isNaN(lat) && !isNaN(long)) {
+    const bearingToKaabah = calculateBearing(lat, long, 21.4225, 39.8262);
+    const sunAzimuth = SunCalc.getPosition(dateTime, lat, long).azimuth * 180 / Math.PI + 180;
+
+    // Update the compass display
+    updateArrow(ELEMENTS.arrowLine, bearingToKaabah);
+    updateArrow(ELEMENTS.arrowHead, bearingToKaabah);
+
+    // Update other UI elements based on your requirements
+    ELEMENTS.qiblatInput.value = bearingToKaabah.toFixed(2);
+    ELEMENTS.degreeInput.value = sunAzimuth.toFixed(2);
+
+    // Call functions to update any lines or visual elements
+    updateCompassDisplay();
+    updateAngles();
+  }
+};
+
+// Attach event listeners to the inputs
+ELEMENTS.latInput.addEventListener('input', updateDisplayForOfflineLatLong);
+ELEMENTS.longInput.addEventListener('input', updateDisplayForOfflineLatLong);
+ELEMENTS.dateTimeInput.addEventListener('change', updateDisplayForOfflineLatLong);
+
+const updateFirstPinData = () => {
+  const lat = parseFloat(ELEMENTS.latInput.value) || 0;
+  const long = parseFloat(ELEMENTS.longInput.value) || 0;
+  const dateTime = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+
+  const toDMS = (degrees, isLatitude) => {
+    const degreeAbs = Math.abs(degrees);
+    const degree = Math.floor(degreeAbs);
+    const minuteDecimal = (degreeAbs - degree) * 60;
+    const minute = Math.floor(minuteDecimal);
+    const second = ((minuteDecimal - minute) * 60).toFixed(2);
+    const direction = isLatitude ? (degrees >= 0 ? 'N' : 'S') : (degrees >= 0 ? 'E' : 'W');
+    return `${degree}° ${minute}' ${second}" ${direction}`;
+  };
+
+  // Calculate the sun's position using SunCalc
+  const sunPosition = SunCalc.getPosition(dateTime, lat, long);
+  const sunAzimuth = (sunPosition.azimuth * 180 / Math.PI + 180).toFixed(2); // Convert to degrees and adjust
+
+  // Use your calculateBearing function to find the Qiblat direction
+  const kaabahLat = 21.4225; // Latitude of the Kaabah in Mecca
+  const kaabahLong = 39.8262; // Longitude of the Kaabah in Mecca
+  const qiblatDegree = calculateBearing(lat, long, kaabahLat, kaabahLong);
+
+  const firstPinDataElement = document.getElementById('firstPinData');
+  firstPinDataElement.innerHTML = `Date: ${dateTime.toLocaleDateString()}<br/>
+                                   Time: ${dateTime.toLocaleTimeString()}<br/>
+                                   Latitude: ${lat.toFixed(6)} (${toDMS(lat, true)})<br/>
+                                   Longitude: ${long.toFixed(6)} (${toDMS(long, false)})<br/>
+                                   Sun Azimuth: ${sunAzimuth}°<br/>
+                                   Qiblat Degree: ${qiblatDegree.toFixed(2)}°<br/>`;
+};
+
+// Ensure to call updateFirstPinData when needed, e.g., on input changes
+ELEMENTS.latInput.addEventListener('input', updateFirstPinData);
+ELEMENTS.longInput.addEventListener('input', updateFirstPinData);
+ELEMENTS.dateTimeInput.addEventListener('change', updateFirstPinData);
+
+const bangunanOption = document.querySelector('option[value="bangunan"]');
+
+  // Function to update the visibility of the "bangunan" option
+  const updateBangunanOptionVisibility = () => {
+    if (navigator.onLine) {
+      bangunanOption.style.display = 'block'; // Show the option
+    } else {
+      bangunanOption.style.display = 'none'; // Hide the option
+    }
+  };
+
+  // Initial check
+  updateBangunanOptionVisibility();
+
+  // Event listeners for online and offline events
+  window.addEventListener('online', updateBangunanOptionVisibility);
+  window.addEventListener('offline', updateBangunanOptionVisibility);
 </script>
 </body>
 </html>
