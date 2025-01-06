@@ -855,24 +855,46 @@ sectors.sector4.setAttribute('fill', lighterColor);
 }
 }
 
+let alertShown = false; // Flag to track if the alert has been shown
 const initializeMapIfOnline = () => {
-    if (!mapInitialized && navigator.geolocation) {
-        loadLeafletResources(() => {
-            initializeMap();
-            mapInitialized = true;
-        });
-    } else {
-        // Remove or hide the map if GPS is not available
-        const mapElement = document.getElementById('map');
-        if (mapElement) {
-            mapElement.style.display = 'none';
-            // Optionally remove the map element entirely
-            // mapElement.parentNode.removeChild(mapElement);
+    if (!mapInitialized) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    loadLeafletResources(() => {
+                        initializeMap(position.coords.latitude, position.coords.longitude);
+                        mapInitialized = true;
+                    });
+                },
+                () => {
+                    if (!alertShown) {
+                        alert('Please enable GPS to view the map.');
+                        alertShown = true; // Set the flag to true after showing the alert
+                    }
+                    // Do not initialize the map if GPS is not available
+                },
+                {
+                    enableHighAccuracy: true, timeout: 5000, maximumAge: 0
+                }
+            );
+        } else {
+            if (!alertShown) {
+                alert('Geolocation is not supported by this browser.');
+                alertShown = true; // Set the flag to true after showing the alert
+            }
+            // Do not initialize the map if geolocation is not supported
         }
     }
-}
+};
+const loadLeafletResources = (callback) => {
+const leafletCSS = document.createElement('link');
+leafletCSS.rel = 'stylesheet';
+leafletCSS.href = 'https://unpkg.com/leaflet/dist/leaflet.css';
+document.head.appendChild(leafletCSS);
 
-const initializeMap = () => {
+loadScript('https://unpkg.com/leaflet/dist/leaflet.js', callback);
+}
+const initializeMap = (latitude, longitude) => {
 const iconSettings = {
 iconSize: [100,
 100],
