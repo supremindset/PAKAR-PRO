@@ -795,7 +795,40 @@ let firstPin, secondPin;
 let map;
 let updateButtonPosition;
 
+window.onload = () => {
+// Initialize the firstPin and secondPin only if the map is loaded
+if (typeof L !== 'undefined' && map) {
+const defaultLocation = [2.8126,
+101.5018];
+firstPin = L.marker(defaultLocation, {
+icon: redIcon, draggable: true
+}).addTo(map);
+secondPin = L.marker([3.1390, 101.6869], {
+icon: yellowIcon, draggable: true
+}).addTo(map);
+}
 
+setupInputWithDebounce(ELEMENTS.degreeInput);
+setupInputWithDebounce(ELEMENTS.qiblatInput);
+
+populateDegreeNumbers();
+initializeDynamicAngleUpdates();
+
+// Add event listener for the search button
+document.getElementById('searchButton').addEventListener('click', () => {
+const query = document.getElementById('locationSearch').value;
+if (query) {
+searchLocation(query);
+}
+});
+
+// Change sector color
+const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
+kaedahQiblatSelect.addEventListener('change',
+updateSectorColors);
+
+updateSectorColors();
+};
 
 const updateSectorColors = () => {
 const kaedahQiblatValue = document.getElementById('kaedahQiblat').value;
@@ -840,16 +873,20 @@ const initializeMapIfOnline = () => {
 }
 
 const initializeMap = () => {
-    const iconSettings = {
-        iconSize: [100, 100],
-        iconAnchor: [30, 100],
-        popupAnchor: [1, -34],
-        tooltipAnchor: [16, -28]
-    };
-    const redIcon = L.icon({
-        ...iconSettings,
-        iconUrl: 'https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/redPin.svg'
-    });
+const iconSettings = {
+iconSize: [100,
+100],
+iconAnchor: [30,
+100],
+popupAnchor: [1,
+-34],
+tooltipAnchor: [16,
+-28]
+};
+const redIcon = L.icon({
+...iconSettings,
+iconUrl: 'https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/redPin.svg'
+});
 const yellowIcon = L.icon({
 ...iconSettings,
 iconUrl: 'https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/yellowPin.svg'
@@ -966,45 +1003,42 @@ updateBearingAndLines('firstPin');
 updateButtonPosition();
 });
 const updateLocation = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                position => {
-                    const { latitude: userLat, longitude: userLng } = position.coords;
-                    const zoomLevel = 19;
-                    firstPin.setLatLng([userLat, userLng]);
-                    map.setView([userLat, userLng], zoomLevel);
-                    updateBearingAndLines('firstPin');
-                    updateButtonPosition();
-                },
-                () => {
-                    alert('Please enable GPS.');
-                    const mapElement = document.getElementById('map');
-                    if (mapElement) {
-                        mapElement.style.display = 'none';
-                        // Optionally remove the map element entirely
-                        // mapElement.parentNode.removeChild(mapElement);
-                    }
-                },
-                {
-                    enableHighAccuracy: true, timeout: 5000, maximumAge: 0
-                }
-            );
-        } else {
-            alert('Geolocation is not supported by this browser.');
-            const mapElement = document.getElementById('map');
-            if (mapElement) {
-                mapElement.style.display = 'none';
-                // Optionally remove the map element entirely
-                // mapElement.parentNode.removeChild(mapElement);
-            }
-        }
-    };
-
-    const addClickEventToButton = (buttonId, handler) => {
-        document.getElementById(buttonId).addEventListener('click', handler);
-    };
-    addClickEventToButton('updateLocationButton', updateLocation);
-    addClickEventToButton('centerDotButton', updateLocation);
+if (navigator.geolocation) {
+navigator.geolocation.getCurrentPosition(
+position => {
+const {
+latitude: userLat, longitude: userLng
+} = position.coords;
+const zoomLevel = 19;
+firstPin.setLatLng([userLat, userLng]);
+map.setView([userLat, userLng], zoomLevel);
+updateBearingAndLines('firstPin');
+updateButtonPosition();
+},
+() => {
+alert('Please enable GPS.');
+firstPin.setLatLng(defaultLocation);
+map.setView(defaultLocation, 19);
+updateBearingAndLines('firstPin');
+updateButtonPosition();
+},
+{
+enableHighAccuracy: true, timeout: 5000, maximumAge: 0
+}
+);
+} else {
+alert('Geolocation is not supported by this browser.');
+firstPin.setLatLng(defaultLocation);
+map.setView(defaultLocation, 19);
+updateBearingAndLines('firstPin');
+updateButtonPosition();
+}
+}
+const addClickEventToButton = (buttonId, handler) => {
+document.getElementById(buttonId).addEventListener('click', handler);
+};
+addClickEventToButton('updateLocationButton', updateLocation);
+addClickEventToButton('centerDotButton', updateLocation);
 
 
 const markerTooltipText1Element = document.getElementById('markerTooltipText1');
@@ -1728,31 +1762,6 @@ marqueeText.innerHTML = `🎉 Happy Birthday, ${birthdayPerson.name}! 🎂`;
 }
 };
 checkBirthdays();
-
-window.onload = () => {
-initializeMapIfOnline();
-
-setupInputWithDebounce(ELEMENTS.degreeInput);
-setupInputWithDebounce(ELEMENTS.qiblatInput);
-
-populateDegreeNumbers();
-initializeDynamicAngleUpdates();
-
-// Add event listener for the search button
-document.getElementById('searchButton').addEventListener('click', () => {
-const query = document.getElementById('locationSearch').value;
-if (query) {
-searchLocation(query);
-}
-});
-
-// Change sector color
-const kaedahQiblatSelect = document.getElementById('kaedahQiblat');
-kaedahQiblatSelect.addEventListener('change',
-updateSectorColors);
-
-updateSectorColors();
-};
 </script>
 
 </body>
