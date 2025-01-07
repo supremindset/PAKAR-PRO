@@ -959,107 +959,110 @@ pane: 'overlayPane'
 }).addTo(map);
 
 // Center Button Related Code
-const updateButtonPosition = () => {
-const firstPinLatLng = firstPin.getLatLng();
-const point = map.latLngToLayerPoint(firstPinLatLng);
-roundButton.style.left = `${point.x + 20}px`;
-roundButton.style.top = `${point.y - 60}px`;
+// Function to show an alert for successful location change
+const showAlertForLocationChange = () => {
+    alert("Location successfully changed.");
 };
+
+const updateButtonPosition = () => {
+    const firstPinLatLng = firstPin.getLatLng();
+    const point = map.latLngToLayerPoint(firstPinLatLng);
+    roundButton.style.left = `${point.x + 20}px`;
+    roundButton.style.top = `${point.y - 60}px`;
+};
+
 const roundButton = document.createElement('button');
 roundButton.className = 'round-button';
 roundButton.id = 'newRoundButton';
 roundButton.innerText = 'OK';
 document.querySelector('.leaflet-map-pane').appendChild(roundButton);
+
 firstPin.on('drag', () => {
-updateButtonPosition();
+    updateButtonPosition();
 });
 firstPin.on('dragstart', () => {
-updateButtonPosition();
+    updateButtonPosition();
 });
 firstPin.on('dragend', () => {
-updateButtonPosition();
+    updateButtonPosition();
+    showAlertForLocationChange(); // Alert on drag end
 });
+
 roundButton.addEventListener('click', (event) => {
-event.stopPropagation();
-const bannerContainer = document.getElementById('install-banner-container');
-if (bannerContainer) {
-bannerContainer.scrollIntoView({
-behavior: 'smooth'
+    event.stopPropagation();
+    const bannerContainer = document.getElementById('install-banner-container');
+    if (bannerContainer) {
+        bannerContainer.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
 });
-}
-});
+
 updateButtonPosition();
-const handlePinDrag = (pin,
-line,
-callback) => {
-pin.on('dragstart',
-() => line.setStyle({
-opacity: 0
-}));
-pin.on('dragend',
-() => {
-callback();
-line.setStyle({
-opacity: 1
-});
-});
+
+const handlePinDrag = (pin, line, callback) => {
+    pin.on('dragstart', () => line.setStyle({ opacity: 0 }));
+    pin.on('dragend', () => {
+        callback();
+        line.setStyle({ opacity: 1 });
+    });
 };
-handlePinDrag(firstPin,
-lineToKaabah,
-() => {
-updateBearingAndLines('firstPin');
-updateButtonPosition();
+
+handlePinDrag(firstPin, lineToKaabah, () => {
+    updateBearingAndLines('firstPin');
+    updateButtonPosition();
 });
-handlePinDrag(secondPin,
-lineBetweenPins,
-() => updateBearingAndLines('secondPin'));
-map.on('click',
-e => {
-secondPin.setLatLng(e.latlng);
-updateBearingAndLines('secondPin');
+
+handlePinDrag(secondPin, lineBetweenPins, () => updateBearingAndLines('secondPin'));
+
+map.on('click', e => {
+    secondPin.setLatLng(e.latlng);
+    updateBearingAndLines('secondPin');
 });
-map.on('contextmenu',
-e => {
-firstPin.setLatLng(e.latlng);
-updateBearingAndLines('firstPin');
-updateButtonPosition();
+
+map.on('contextmenu', e => {
+    firstPin.setLatLng(e.latlng);
+    updateBearingAndLines('firstPin');
+    updateButtonPosition();
+    showAlertForLocationChange(); // Alert on context menu action
 });
+
 const updateLocation = () => {
-if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(
-position => {
-const {
-latitude: userLat, longitude: userLng
-} = position.coords;
-const zoomLevel = 19;
-firstPin.setLatLng([userLat, userLng]);
-map.setView([userLat, userLng], zoomLevel);
-updateBearingAndLines('firstPin');
-updateButtonPosition();
-alert('Location successfully updated!'); // Show success alert
-},
-() => {
-alert('Please enable GPS.');
-firstPin.setLatLng(defaultLocation);
-map.setView(defaultLocation, 19);
-updateBearingAndLines('firstPin');
-updateButtonPosition();
-},
-{
-enableHighAccuracy: true, timeout: 5000, maximumAge: 0
-}
-);
-} else {
-alert('Geolocation is not supported by this browser.');
-firstPin.setLatLng(defaultLocation);
-map.setView(defaultLocation, 19);
-updateBearingAndLines('firstPin');
-updateButtonPosition();
-}
-}
-const addClickEventToButton = (buttonId, handler) => {
-document.getElementById(buttonId).addEventListener('click', handler);
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            position => {
+                const { latitude: userLat, longitude: userLng } = position.coords;
+                const zoomLevel = 19;
+                firstPin.setLatLng([userLat, userLng]);
+                map.setView([userLat, userLng], zoomLevel);
+                updateBearingAndLines('firstPin');
+                updateButtonPosition();
+                showAlertForLocationChange(); // Alert after updating location
+            },
+            () => {
+                alert('Please enable GPS.');
+                firstPin.setLatLng(defaultLocation);
+                map.setView(defaultLocation, 19);
+                updateBearingAndLines('firstPin');
+                updateButtonPosition();
+            },
+            {
+                enableHighAccuracy: true, timeout: 5000, maximumAge: 0
+            }
+        );
+    } else {
+        alert('Geolocation is not supported by this browser.');
+        firstPin.setLatLng(defaultLocation);
+        map.setView(defaultLocation, 19);
+        updateBearingAndLines('firstPin');
+        updateButtonPosition();
+    }
 };
+
+const addClickEventToButton = (buttonId, handler) => {
+    document.getElementById(buttonId).addEventListener('click', handler);
+};
+
 addClickEventToButton('updateLocationButton', updateLocation);
 addClickEventToButton('centerDotButton', updateLocation);
 
