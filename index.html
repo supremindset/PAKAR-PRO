@@ -753,6 +753,7 @@ document.getElementById('kaedahQiblat').addEventListener('change', function() {
         dateTimeInput.style.display = 'block';
         blackArrowLine.style.backgroundColor = 'black';
         blackArrowHead.style.backgroundColor = 'black';
+    updateFirstPinData();
     }
     checkServerReachability();
 });
@@ -1587,7 +1588,7 @@ const currentTime = date.getTime();
 return currentTime < sunTimes.sunrise.getTime() || currentTime > sunTimes.sunset.getTime();
 }
 
-// Function to update compass display, bearings, and other elements
+// offlineLatLong logic
 const updateDisplayForOfflineLatLong = () => {
 const lat = parseFloat(ELEMENTS.latInput.value);
 const long = parseFloat(ELEMENTS.longInput.value);
@@ -1608,7 +1609,6 @@ updateAngles();
 ELEMENTS.latInput.addEventListener('input', updateDisplayForOfflineLatLong);
 ELEMENTS.longInput.addEventListener('input', updateDisplayForOfflineLatLong);
 ELEMENTS.dateTimeInput.addEventListener('change', updateDisplayForOfflineLatLong);
-
 const updateFirstPinData = () => {
 const lat = parseFloat(ELEMENTS.latInput.value) || 0;
 const long = parseFloat(ELEMENTS.longInput.value) || 0;
