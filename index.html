@@ -1036,6 +1036,7 @@ firstPin.setLatLng([userLat, userLng]);
 map.setView([userLat, userLng], zoomLevel);
 updateBearingAndLines('firstPin');
 updateButtonPosition();
+alert('Location successfully updated!'); // Show success alert
 },
 () => {
 alert('Please enable GPS.');
