@@ -754,6 +754,7 @@ document.getElementById('kaedahQiblat').addEventListener('change', function() {
         blackArrowLine.style.backgroundColor = 'black';
         blackArrowHead.style.backgroundColor = 'black';
     }
+    checkServerReachability();
 });
 document.getElementById('kaedahQiblat').dispatchEvent(new Event('change'));
 // End OnlineOffline
@@ -958,25 +959,22 @@ interactive: false,
 pane: 'overlayPane'
 }).addTo(map);
 
-// Center Button Related Code
+// Center Button Related Code //
 // Function to show an alert for successful location change
 const showAlertForLocationChange = () => {
     alert("Location successfully changed.");
 };
-
 const updateButtonPosition = () => {
     const firstPinLatLng = firstPin.getLatLng();
     const point = map.latLngToLayerPoint(firstPinLatLng);
     roundButton.style.left = `${point.x + 20}px`;
     roundButton.style.top = `${point.y - 60}px`;
 };
-
 const roundButton = document.createElement('button');
 roundButton.className = 'round-button';
 roundButton.id = 'newRoundButton';
 roundButton.innerText = 'OK';
 document.querySelector('.leaflet-map-pane').appendChild(roundButton);
-
 firstPin.on('drag', () => {
     updateButtonPosition();
 });
@@ -987,7 +985,6 @@ firstPin.on('dragend', () => {
     updateButtonPosition();
     showAlertForLocationChange(); // Alert on drag end
 });
-
 roundButton.addEventListener('click', (event) => {
     event.stopPropagation();
     const bannerContainer = document.getElementById('install-banner-container');
@@ -997,9 +994,7 @@ roundButton.addEventListener('click', (event) => {
         });
     }
 });
-
 updateButtonPosition();
-
 const handlePinDrag = (pin, line, callback) => {
     pin.on('dragstart', () => line.setStyle({ opacity: 0 }));
     pin.on('dragend', () => {
@@ -1007,26 +1002,21 @@ const handlePinDrag = (pin, line, callback) => {
         line.setStyle({ opacity: 1 });
     });
 };
-
 handlePinDrag(firstPin, lineToKaabah, () => {
     updateBearingAndLines('firstPin');
     updateButtonPosition();
 });
-
 handlePinDrag(secondPin, lineBetweenPins, () => updateBearingAndLines('secondPin'));
-
 map.on('click', e => {
     secondPin.setLatLng(e.latlng);
     updateBearingAndLines('secondPin');
 });
-
 map.on('contextmenu', e => {
     firstPin.setLatLng(e.latlng);
     updateBearingAndLines('firstPin');
     updateButtonPosition();
     showAlertForLocationChange(); // Alert on context menu action
 });
-
 const updateLocation = () => {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -1058,11 +1048,9 @@ const updateLocation = () => {
         updateButtonPosition();
     }
 };
-
 const addClickEventToButton = (buttonId, handler) => {
     document.getElementById(buttonId).addEventListener('click', handler);
 };
-
 addClickEventToButton('updateLocationButton', updateLocation);
 addClickEventToButton('centerDotButton', updateLocation);
 
