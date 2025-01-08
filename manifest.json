@@ -6,7 +6,7 @@
   "start_url": "/PAKAR-PRO/index.html",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
-  "display": "standalone",
+  "display": "fullscreen",
   "prefer_related_applications": false,
   "icons": [
     {
@@ -56,5 +56,6 @@
   ],
   "id": "pakarpro-1",
   "dir": "ltr",
-  "lang": "en"
+  "lang": "en",
+  "orientation": "any"
 }
