@@ -3,7 +3,7 @@
   "short_name": "PAKAR-PRO",
   "description": "PAKAR-PRO app more features than PAKAR app.",
   "scope": "/PAKAR-PRO/",
-  "start_url":"/?standalone=1",
+  "start_url": "/PAKAR-PRO/index.html",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "display": "standalone",
