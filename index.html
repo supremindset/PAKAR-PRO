@@ -961,9 +961,21 @@ pane: 'overlayPane'
 }).addTo(map);
 
 // Center Button Related Code //
-// Function to show an alert for successful location change
-const showAlertForLocationChange = () => {
-    alert("Location successfully changed.");
+// Function to make the centerDotButton blink green
+const blinkCenterDotButton = () => {
+    const centerDotButton = document.getElementById('centerDotButton');
+    let blinkCount = 0;
+    const originalColor = centerDotButton.style.backgroundColor || '#2980b9'; // Default color if not set
+
+    const blinkInterval = setInterval(() => {
+        centerDotButton.style.backgroundColor = (blinkCount % 2 === 0) ? 'green' : originalColor;
+        blinkCount++;
+
+        if (blinkCount >= 6) { // Blink 3 times (since it toggles color twice per blink)
+            clearInterval(blinkInterval);
+            centerDotButton.style.backgroundColor = originalColor; // Ensure it ends on the original color
+        }
+    }, 500); // Change color every 500 ms
 };
 const updateButtonPosition = () => {
     const firstPinLatLng = firstPin.getLatLng();
@@ -984,6 +996,7 @@ firstPin.on('dragstart', () => {
 });
 firstPin.on('dragend', () => {
     updateButtonPosition();
+    blinkCenterDotButton();
 });
 roundButton.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -1015,6 +1028,7 @@ map.on('contextmenu', e => {
     firstPin.setLatLng(e.latlng);
     updateBearingAndLines('firstPin');
     updateButtonPosition();
+    blinkCenterDotButton();
 });
 const updateLocation = () => {
     if (navigator.geolocation) {
@@ -1026,7 +1040,7 @@ const updateLocation = () => {
                 map.setView([userLat, userLng], zoomLevel);
                 updateBearingAndLines('firstPin');
                 updateButtonPosition();
-                showAlertForLocationChange(); // Alert after updating location
+                blinkCenterDotButton();
             },
             () => {
                 alert('Please enable GPS.');
