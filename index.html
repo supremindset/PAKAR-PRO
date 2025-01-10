@@ -968,7 +968,7 @@ const blinkCenterDotButton = () => {
     const originalColor = centerDotButton.style.backgroundColor || '#2980b9'; // Default color if not set
 
     const blinkInterval = setInterval(() => {
-        centerDotButton.style.backgroundColor = (blinkCount % 2 === 0) ? 'green' : originalColor;
+        centerDotButton.style.backgroundColor = (blinkCount % 2 === 0) ? 'white' : originalColor;
         blinkCount++;
 
         if (blinkCount >= 6) { // Blink 3 times (since it toggles color twice per blink)
