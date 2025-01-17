@@ -1492,46 +1492,44 @@ element.style.transform = `translateY(-50%) rotate(${degree}deg)`;
 
 // 7
 const updateCompassDisplay = () => {
-let lat,
-lng;
+    let lat, lng;
 
-const inputLat = parseFloat(ELEMENTS.latInput.value);
-const inputLng = parseFloat(ELEMENTS.longInput.value);
+    const inputLat = parseFloat(ELEMENTS.latInput.value);
+    const inputLng = parseFloat(ELEMENTS.longInput.value);
 
-if (!isNaN(inputLat) && !isNaN(inputLng)) {
-lat = inputLat;
-lng = inputLng;
-} else if (firstPin) {
-const firstPinLatLng = firstPin.getLatLng();
-lat = firstPinLatLng.lat;
-lng = firstPinLatLng.lng;
-} else {
-lat = 0;
-lng = 0;
-}
+    if (!isNaN(inputLat) && !isNaN(inputLng)) {
+        lat = inputLat;
+        lng = inputLng;
+    } else if (firstPin) {
+        const firstPinLatLng = firstPin.getLatLng();
+        lat = firstPinLatLng.lat;
+        lng = firstPinLatLng.lng;
+    } else {
+        lat = 0;
+        lng = 0;
+    }
 
-const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value): new Date();
-const isNight = isSunDown(selectedDate, lat, lng);
+    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
+    const isNight = isSunDown(selectedDate, lat, lng);
 
-const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
-const inputQiblaDegree = parseFloat(ELEMENTS.qiblatInput.value) || 0;
-const potongValue = parseFloat(document.getElementById('potongBayangInput').value) || 0;
-    const finalQiblatDegree = inputQiblaDegree + potongValue;
+    const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
+    const potongValue = parseFloat(document.getElementById('potongBayangInput').value) || 0;
+    const modifiedDegree = degree + potongValue;  // Modify degreeInput instead
 
-if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ||
-(ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight) ||
-(ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.OFFLINELATLONG && isNight)) {
-ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
-} else {
-ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
-}
+    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ||
+        (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight) ||
+        (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.OFFLINELATLONG && isNight)) {
+        ELEMENTS.circle.style.transform = `rotate(${-90 - modifiedDegree}deg)`;
+    } else {
+        ELEMENTS.circle.style.transform = `rotate(${90 - modifiedDegree}deg)`;
+    }
 
-ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${degree}deg)`;
+    ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${modifiedDegree}deg)`;
 
-updateArrow(ELEMENTS.blackArrowLine, degree);
-updateArrow(ELEMENTS.blackArrowHead, degree);
-updateArrow(ELEMENTS.arrowLine, finalQiblatDegree || 0);
-updateArrow(ELEMENTS.arrowHead, finalQiblatDegree || 0);
+    updateArrow(ELEMENTS.blackArrowLine, modifiedDegree);
+    updateArrow(ELEMENTS.blackArrowHead, modifiedDegree);
+    updateArrow(ELEMENTS.arrowLine, parseFloat(ELEMENTS.qiblatInput.value) || 0);
+    updateArrow(ELEMENTS.arrowHead, parseFloat(ELEMENTS.qiblatInput.value) || 0);
 };
 ELEMENTS.latInput.addEventListener('input', updateCompassDisplay);
 ELEMENTS.longInput.addEventListener('input', updateCompassDisplay);
