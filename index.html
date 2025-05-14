@@ -569,6 +569,8 @@
             <input class="custom-select" type="number" id="potongBayangInput" placeholder="Potong Bayang (degree)" min="0" max="360" step="0.1">
         </div>
     </fieldset>
+    <button id="calculateAlignmentButton">Calculate Alignment Time</button>
+<div id="alignmentResult"></div>
     <br>
     <div class="container">
         <div class="sticky-wrapper">
@@ -1066,27 +1068,48 @@ const addClickEventToButton = (buttonId, handler) => {
 addClickEventToButton('updateLocationButton', updateLocation);
 addClickEventToButton('centerDotButton', updateLocation);
 
+// New function to find alignment time
+function findAlignmentTime(lat, lng, targetAngle) {
+    const date = new Date();
+    const increment = 1; // Increment in minutes
+    let found = false;
+    let alignmentTime;
+
+    for (let minutes = 0; minutes < 1440; minutes += increment) {
+        date.setHours(0, minutes, 0, 0); // Set time to current minutes
+        const sunPosition = SunCalc.getPosition(date, lat, lng);
+        const sunAzimuth = (sunPosition.azimuth * 180 / Math.PI + 180) % 360;
+
+        if (Math.abs(sunAzimuth - targetAngle) < 0.1) { // Adjust threshold as needed
+            alignmentTime = new Date(date);
+            found = true;
+            break;
+        }
+    }
+
+    return found ? alignmentTime : null;
+}
+
+// Add event listener for the alignment button
+document.getElementById('calculateAlignmentButton').addEventListener('click', () => {
+    const lat = parseFloat(document.getElementById('latInput').value) || 0;
+    const lng = parseFloat(document.getElementById('longInput').value) || 0;
+    const targetAngle = parseFloat(document.getElementById('degreeInput').value);
+
+    const alignmentTime = findAlignmentTime(lat, lng, targetAngle);
+    const resultElement = document.getElementById('alignmentResult');
+
+    if (alignmentTime) {
+        resultElement.textContent = `Alignment occurs at: ${alignmentTime.toLocaleTimeString()}`;
+    } else {
+        resultElement.textContent = 'No alignment found today.';
+    }
+});
 
 const markerTooltipText1Element = document.getElementById('markerTooltipText1');
 const markerTooltipText2Element = document.getElementById('markerTooltipText2');
 
 const updateBearingAndLines = (changedPin) => {
-// Function to calculate the meeting time of the arrow-head and black-arrow-head
-const calculateMeetingTime = (lat, lng, currentDate) => {
-    const sunPosition = SunCalc.getPosition(currentDate, lat, lng);
-    const sunAzimuth = sunPosition.azimuth * 180 / Math.PI + 180; // Sun azimuth in degrees
-
-    // Assuming blackArrowHead represents the qiblat direction
-    const qiblatDegree = calculateBearing(lat, lng, KAABAH_LAT, KAABAH_LONG);
-
-    // Calculate time until meeting based on azimuth differences
-    const azimuthDifference = qiblatDegree - sunAzimuth;
-    const timeOffset = azimuthDifference / 15; // Rough estimate: 15 degrees per hour
-    const meetingTime = new Date(currentDate.getTime() + timeOffset * 3600000); // Convert hours to milliseconds
-
-    return meetingTime;
-};
-
 if (firstPin && secondPin) {
 const firstLatLng = firstPin.getLatLng();
 
@@ -1128,7 +1151,6 @@ opacity: 0
 }
 
 const currentDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value): new Date();
-const meetingTime = calculateMeetingTime(firstLatLng.lat, firstLatLng.lng, currentDate);
 
 const markerTooltipText1Element = document.getElementById('markerTooltipText1');
 const markerTooltipText2Element = document.getElementById('markerTooltipText2');
@@ -1149,7 +1171,6 @@ firstPinDataElement.innerHTML = `
     Time: ${currentDate.toLocaleTimeString()}<br/>
     Latitude: ${firstLatLng.lat.toFixed(6)} (${toDMS(firstLatLng.lat, true)})<br/>
     Longitude: ${firstLatLng.lng.toFixed(6)} (${toDMS(firstLatLng.lng, false)})<br/>
-    Special Time: ${meetingTime.toLocaleTimeString()}<br/>
 `;
 
 if (!ELEMENTS.dateTimeInput.value) {
@@ -1788,6 +1809,30 @@ if (event.target === modal) {
 modal.style.display = "none";
 }
 }
+
+// birthdays
+const birthdays = [{
+name: "Abi",
+birthdate: "07-08"
+}, // July 8th
+{
+name: "Bob",
+birthdate: "10-15"
+}, // October 15th
+// Add more birthdays here
+];
+const checkBirthdays = () => {
+const today = new Date();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+const currentDate = `${month}-${day}`;
+const birthdayPerson = birthdays.find(person => person.birthdate === currentDate);
+const marqueeText = document.getElementById("marqueeText");
+if (birthdayPerson) {
+marqueeText.innerHTML = `🎉 Happy Birthday, ${birthdayPerson.name}! 🎂`;
+}
+};
+checkBirthdays();
 </script>
 
 </body>
