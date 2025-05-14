@@ -569,8 +569,6 @@
             <input class="custom-select" type="number" id="potongBayangInput" placeholder="Potong Bayang (degree)" min="0" max="360" step="0.1">
         </div>
     </fieldset>
-    <button id="calculateAlignmentButton">Calculate Alignment Time</button>
-<div id="alignmentResult"></div>
     <br>
     <div class="container">
         <div class="sticky-wrapper">
@@ -926,8 +924,6 @@ attribution, maxZoom
 
 const baseMaps = {
 "Esri World Imagery": addLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>', 19),
-"HERE Satellite": addLayer('https://{s}.aerial.maps.ls.hereapi.com/maptile/2.1/maptile/newest/satellite.day/{z}/{x}/{y}/256/png8?apiKey=ZrGsYcNXW4T_cGxQWLiIZ0DdraWLJ2XaCfI8axrRCkw&lg=eng', 'Map data © 2024 HERE', 22),
-"HERE Normal Day": addLayer('https://{s}.base.maps.ls.hereapi.com/maptile/newest/normal.day/{z}/{x}/{y}/256/png8?apiKey=ZrGsYcNXW4T_cGxQWLiIZ0DdraWLJ2XaCfI8axrRCkw&lg=eng', 'Map data © 2024 HERE', 20),
 "OpenStreetMap": addLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', 'Map data © OpenStreetMap contributors', 19)
 };
 baseMaps["Esri World Imagery"].addTo(map);
@@ -1068,43 +1064,6 @@ const addClickEventToButton = (buttonId, handler) => {
 addClickEventToButton('updateLocationButton', updateLocation);
 addClickEventToButton('centerDotButton', updateLocation);
 
-// New function to find alignment time
-function findAlignmentTime(lat, lng, targetAngle) {
-    const date = new Date();
-    const increment = 1; // Increment in minutes
-    let found = false;
-    let alignmentTime;
-
-    for (let minutes = 0; minutes < 1440; minutes += increment) {
-        date.setHours(0, minutes, 0, 0); // Set time to current minutes
-        const sunPosition = SunCalc.getPosition(date, lat, lng);
-        const sunAzimuth = (sunPosition.azimuth * 180 / Math.PI + 180) % 360;
-
-        if (Math.abs(sunAzimuth - targetAngle) < 0.1) { // Adjust threshold as needed
-            alignmentTime = new Date(date);
-            found = true;
-            break;
-        }
-    }
-
-    return found ? alignmentTime : null;
-}
-
-// Add event listener for the alignment button
-document.getElementById('calculateAlignmentButton').addEventListener('click', () => {
-    const lat = parseFloat(document.getElementById('latInput').value) || 0;
-    const lng = parseFloat(document.getElementById('longInput').value) || 0;
-    const targetAngle = parseFloat(document.getElementById('degreeInput').value);
-
-    const alignmentTime = findAlignmentTime(lat, lng, targetAngle);
-    const resultElement = document.getElementById('alignmentResult');
-
-    if (alignmentTime) {
-        resultElement.textContent = `Alignment occurs at: ${alignmentTime.toLocaleTimeString()}`;
-    } else {
-        resultElement.textContent = 'No alignment found today.';
-    }
-});
 
 const markerTooltipText1Element = document.getElementById('markerTooltipText1');
 const markerTooltipText2Element = document.getElementById('markerTooltipText2');
@@ -1621,12 +1580,6 @@ degreeNumber.style.left = `${x}px`;
 degreeNumber.style.top = `${y}px`;
 degreeNumber.style.transform = `translate(-50%, -50%) rotate(${i}deg)`;
 
-degreeNumber.addEventListener('click', () => {
-if (i === 100 || i === 200 || i === 0) {
-showModal(i);
-}
-});
-
 ELEMENTS.circle.appendChild(degreeNumber);
 }
 };
@@ -1724,42 +1677,6 @@ important: 3 // Show this modal 3 times consecutively
   // Add more modal objects here
   */
 ];
-const showModal = (degree) => {
-const modal = document.createElement('div');
-modal.className = 'modal';
-modal.style.display = 'block';
-let content = '';
-
-// Customize the content based on the degree. search: if (i === 100
-if (degree === 100) {
-content = `<p>You are lucky!</p>`;
-} else if (degree === 200) {
-content = `<p>You are kind!</p>`;
-} else if (degree === 0) {
-content = `
-<p>You found me. Saya developer app ini. Banyak orang yang suka menerima, tetapi masih ada orang yang suka memberi. Semoga kamu diberkati dunia akhirat. ❤️</p>
-<img src="https://raw.githubusercontent.com/supremindset/PAKAR/refs/heads/main/IMG_20240215_102404.jpg" alt="Sample Image" class="modal-image">
-`;
-}
-
-modal.innerHTML = `
-<div class="modal-content">
-<span class="close">&times;</span>
-${content}
-</div>
-`;
-document.body.appendChild(modal);
-modal.querySelector('.close').onclick = () => {
-modal.style.display = 'none';
-document.body.removeChild(modal);
-};
-window.onclick = (event) => {
-if (event.target === modal) {
-modal.style.display = 'none';
-document.body.removeChild(modal);
-}
-};
-};
 let currentModalIndex = null;
 let repeatCount = 0;
 let clickCount = 0;
@@ -1809,30 +1726,6 @@ if (event.target === modal) {
 modal.style.display = "none";
 }
 }
-
-// birthdays
-const birthdays = [{
-name: "Abi",
-birthdate: "07-08"
-}, // July 8th
-{
-name: "Bob",
-birthdate: "10-15"
-}, // October 15th
-// Add more birthdays here
-];
-const checkBirthdays = () => {
-const today = new Date();
-const month = String(today.getMonth() + 1).padStart(2, '0');
-const day = String(today.getDate()).padStart(2, '0');
-const currentDate = `${month}-${day}`;
-const birthdayPerson = birthdays.find(person => person.birthdate === currentDate);
-const marqueeText = document.getElementById("marqueeText");
-if (birthdayPerson) {
-marqueeText.innerHTML = `🎉 Happy Birthday, ${birthdayPerson.name}! 🎂`;
-}
-};
-checkBirthdays();
 </script>
 
 </body>
