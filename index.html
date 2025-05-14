@@ -1071,6 +1071,22 @@ const markerTooltipText1Element = document.getElementById('markerTooltipText1');
 const markerTooltipText2Element = document.getElementById('markerTooltipText2');
 
 const updateBearingAndLines = (changedPin) => {
+// Function to calculate the meeting time of the arrow-head and black-arrow-head
+const calculateMeetingTime = (lat, lng, currentDate) => {
+    const sunPosition = SunCalc.getPosition(currentDate, lat, lng);
+    const sunAzimuth = sunPosition.azimuth * 180 / Math.PI + 180; // Sun azimuth in degrees
+
+    // Assuming blackArrowHead represents the qiblat direction
+    const qiblatDegree = calculateBearing(lat, lng, KAABAH_LAT, KAABAH_LONG);
+
+    // Calculate time until meeting based on azimuth differences
+    const azimuthDifference = qiblatDegree - sunAzimuth;
+    const timeOffset = azimuthDifference / 15; // Rough estimate: 15 degrees per hour
+    const meetingTime = new Date(currentDate.getTime() + timeOffset * 3600000); // Convert hours to milliseconds
+
+    return meetingTime;
+};
+
 if (firstPin && secondPin) {
 const firstLatLng = firstPin.getLatLng();
 
@@ -1112,6 +1128,7 @@ opacity: 0
 }
 
 const currentDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value): new Date();
+const meetingTime = calculateMeetingTime(firstLatLng.lat, firstLatLng.lng, currentDate);
 
 const markerTooltipText1Element = document.getElementById('markerTooltipText1');
 const markerTooltipText2Element = document.getElementById('markerTooltipText2');
@@ -1132,6 +1149,7 @@ firstPinDataElement.innerHTML = `
     Time: ${currentDate.toLocaleTimeString()}<br/>
     Latitude: ${firstLatLng.lat.toFixed(6)} (${toDMS(firstLatLng.lat, true)})<br/>
     Longitude: ${firstLatLng.lng.toFixed(6)} (${toDMS(firstLatLng.lng, false)})<br/>
+    Special Time: ${meetingTime.toLocaleTimeString()}<br/>
 `;
 
 if (!ELEMENTS.dateTimeInput.value) {
@@ -1492,44 +1510,46 @@ element.style.transform = `translateY(-50%) rotate(${degree}deg)`;
 
 // 7
 const updateCompassDisplay = () => {
-    let lat, lng;
+let lat,
+lng;
 
-    const inputLat = parseFloat(ELEMENTS.latInput.value);
-    const inputLng = parseFloat(ELEMENTS.longInput.value);
+const inputLat = parseFloat(ELEMENTS.latInput.value);
+const inputLng = parseFloat(ELEMENTS.longInput.value);
 
-    if (!isNaN(inputLat) && !isNaN(inputLng)) {
-        lat = inputLat;
-        lng = inputLng;
-    } else if (firstPin) {
-        const firstPinLatLng = firstPin.getLatLng();
-        lat = firstPinLatLng.lat;
-        lng = firstPinLatLng.lng;
-    } else {
-        lat = 0;
-        lng = 0;
-    }
+if (!isNaN(inputLat) && !isNaN(inputLng)) {
+lat = inputLat;
+lng = inputLng;
+} else if (firstPin) {
+const firstPinLatLng = firstPin.getLatLng();
+lat = firstPinLatLng.lat;
+lng = firstPinLatLng.lng;
+} else {
+lat = 0;
+lng = 0;
+}
 
-    const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value) : new Date();
-    const isNight = isSunDown(selectedDate, lat, lng);
+const selectedDate = ELEMENTS.dateTimeInput.value ? new Date(ELEMENTS.dateTimeInput.value): new Date();
+const isNight = isSunDown(selectedDate, lat, lng);
 
-    const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
-    const potongValue = parseFloat(document.getElementById('potongBayangInput').value) || 0;
-    const modifiedDegree = degree + potongValue;  // Modify degreeInput instead
+const degree = parseFloat(ELEMENTS.degreeInput.value) || 0;
+const inputQiblaDegree = parseFloat(ELEMENTS.qiblatInput.value) || 0;
+const potongValue = parseFloat(document.getElementById('potongBayangInput').value) || 0;
+    const finalQiblatDegree = inputQiblaDegree + potongValue;
 
-    if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ||
-        (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight) ||
-        (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.OFFLINELATLONG && isNight)) {
-        ELEMENTS.circle.style.transform = `rotate(${-90 - modifiedDegree}deg)`;
-    } else {
-        ELEMENTS.circle.style.transform = `rotate(${90 - modifiedDegree}deg)`;
-    }
+if (ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BANGUNAN ||
+(ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.BAYANG && isNight) ||
+(ELEMENTS.kaedahQiblat.value === QIBLAT_METHODS.OFFLINELATLONG && isNight)) {
+ELEMENTS.circle.style.transform = `rotate(${-90 - degree}deg)`;
+} else {
+ELEMENTS.circle.style.transform = `rotate(${90 - degree}deg)`;
+}
 
-    ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${modifiedDegree}deg)`;
+ELEMENTS.centerLine.style.transform = `translateY(-50%) rotate(${degree}deg)`;
 
-    updateArrow(ELEMENTS.blackArrowLine, modifiedDegree);
-    updateArrow(ELEMENTS.blackArrowHead, modifiedDegree);
-    updateArrow(ELEMENTS.arrowLine, parseFloat(ELEMENTS.qiblatInput.value) || 0);
-    updateArrow(ELEMENTS.arrowHead, parseFloat(ELEMENTS.qiblatInput.value) || 0);
+updateArrow(ELEMENTS.blackArrowLine, degree);
+updateArrow(ELEMENTS.blackArrowHead, degree);
+updateArrow(ELEMENTS.arrowLine, finalQiblatDegree || 0);
+updateArrow(ELEMENTS.arrowHead, finalQiblatDegree || 0);
 };
 ELEMENTS.latInput.addEventListener('input', updateCompassDisplay);
 ELEMENTS.longInput.addEventListener('input', updateCompassDisplay);
@@ -1768,30 +1788,6 @@ if (event.target === modal) {
 modal.style.display = "none";
 }
 }
-
-// birthdays
-const birthdays = [{
-name: "Abi",
-birthdate: "07-08"
-}, // July 8th
-{
-name: "Bob",
-birthdate: "10-15"
-}, // October 15th
-// Add more birthdays here
-];
-const checkBirthdays = () => {
-const today = new Date();
-const month = String(today.getMonth() + 1).padStart(2, '0');
-const day = String(today.getDate()).padStart(2, '0');
-const currentDate = `${month}-${day}`;
-const birthdayPerson = birthdays.find(person => person.birthdate === currentDate);
-const marqueeText = document.getElementById("marqueeText");
-if (birthdayPerson) {
-marqueeText.innerHTML = `🎉 Happy Birthday, ${birthdayPerson.name}! 🎂`;
-}
-};
-checkBirthdays();
 </script>
 
 </body>
